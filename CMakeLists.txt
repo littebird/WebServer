@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.23 )
 
-project( http-demo 
+project( WebServer 
          VERSION 0.1.0
          DESCRIPTION "Description of project"
          HOMEPAGE_URL "http://www.abc.com"
@@ -11,27 +11,27 @@ project( http-demo
 #         string
 #)
          
-add_executable( http-demo )
+add_executable( WebServer )
 
-target_sources( http-demo PRIVATE 
+target_sources( WebServer PRIVATE 
                 main.cpp )
                 
-target_compile_features( http-demo PRIVATE cxx_std_20 )
-#target_compile_options( http-demo PRIVATE -fmodules-ts )
+target_compile_features( WebServer PRIVATE cxx_std_20 )
+#target_compile_options( WebServer PRIVATE -fmodules-ts )
 
-#target_include_directories( http-demo PRIVATE /usr/include )
+#target_include_directories( WebServer PRIVATE /usr/include )
 
-#target_link_directories( http-demo PRIVATE /usr/lib )
+#target_link_directories( WebServer PRIVATE /usr/lib )
 
-#target_link_libraries( http-demo PRIVATE m )
+#target_link_libraries( WebServer PRIVATE m )
 
-#set_target_properties( http-demo PROPERTIES
+#set_target_properties( WebServer PROPERTIES
             #CXX_STANDARD 20
             #CXX_EXTENSIONS OFF
             #etc..
             #)
 # 设置指定的C++编译器版本是必须的，如果不设置，或者为OFF，则指定版本不可用时，会使用上一版本。
-#set_target_properties(http-demo PROPERTIES  CXX_STANDARD_REQUIRED on)
+#set_target_properties(WebServer PROPERTIES  CXX_STANDARD_REQUIRED on)
 
 
 ## --------------------------------------------------------------------------
