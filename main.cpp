@@ -35,7 +35,6 @@ public:
 
         _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error));
 
-
     }
 
     void handle_read(std::shared_ptr<tcp::socket> _socket,const boost::system::error_code& error){
@@ -52,7 +51,9 @@ public:
             memcpy(m_readbuf,reply.c_str(),reply.size());
 
 
-            _socket->async_write_some(buffer(m_readbuf,reply.size()),boost::bind(&Http_server::handle_write,this,_socket,boost::asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
+            _socket->async_write_some(buffer(reply,reply.size()),boost::bind(&Http_server::handle_write,this,_socket,boost::asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
+
+
 
         }
 
@@ -66,27 +67,6 @@ public:
     }
     void run(){
         m_io_context.run();
-    }
-
-    std::string ParseMsgContent(std::string msg)//解析请求报文，去掉报文头，保留报文消息体
-    {
-        std::string content;
-        int length = msg.size();
-        std::string::size_type pos;
-        while ((pos = msg.rfind("\r")) != std::string::npos)
-        {
-            if (pos >= msg.size()-2)
-            {
-                msg = msg.substr(0, pos);
-                continue;
-            }
-            else
-            {
-                content = msg.substr(pos + 1, msg.size() - pos);
-                break;
-            }
-        }
-        return content;
     }
 
     void close()//关闭socket连接
