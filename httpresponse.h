@@ -2,6 +2,7 @@
 #define HTTPRESPONSE_H
 #include<iostream>
 #include<vector>
+#include<boost/asio/buffer.hpp>
 #include<map>
 
 // HTTP Status codes
@@ -58,7 +59,6 @@ public:
     void addStatusLine();
     void addHeader();
     void addBody();
-
 
 
     std::string m_status_line;     //状态行

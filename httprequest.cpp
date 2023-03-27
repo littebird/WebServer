@@ -18,47 +18,62 @@ void HttpRequest::init()
     m_parse_state=REQUEST_LINE;
 }
 
-HttpRequest::HTTP_CODE HttpRequest::parse_request(std::string &text)
+HttpRequest::HTTP_CODE HttpRequest::parse_request(std::istream& readbuf)
 {
-    LINE_STATUS line_status=LINE_OK;
-    HTTP_CODE  code=NO_REQUEST;
+    std::string line;
+
+    while(getline(readbuf,line)&& m_parse_state != FINISH){
+        line.pop_back();//去掉/r
+        switch (m_parse_state)
+        {
+        case REQUEST_LINE:
+            if(!parse_request_line(line));
+                return BAD_REQUEST;
+            break;
+        case HEADERS:
+            parse_header(line);
+            m_keepAlive=keepAlive();
+            break;
 
 
+        default:
+            break;
 
-    return NO_REQUEST;
+        }
+    }
+
+    return GET_REQUEST;
 }
 
 
-HttpRequest::HTTP_CODE HttpRequest::parse_request_line(const std::string& text)
+bool HttpRequest::parse_request_line(const std::string& text)
 {
     std::regex patten("^([^ ]*) ([^ ]*) HTTP/([^ ]*)$");
        std::smatch subMatch;
        if(regex_match(text, subMatch, patten)) {
            m_method = subMatch[1];
-           m_path = subMatch[2];
+           m_uri = subMatch[2];
            m_version = subMatch[3];
            m_parse_state = HEADERS;
-           return GET_REQUEST;
+           return true;
        }
-       return BAD_REQUEST;
+       return false;
 }
 
-HttpRequest::HTTP_CODE HttpRequest::parse_header(const std::string& text)
+void HttpRequest::parse_header(const std::string& text)
 {
     std::regex patten("^([^:]*): ?(.*)$");
     std::smatch subMatch;
     if(regex_match(text, subMatch, patten)) {
         header_kv[subMatch[1]] = subMatch[2];
-        return GET_REQUEST;
     }
     else {
-        m_parse_state = BODY;
-        return GET_REQUEST;
+        m_parse_state = FINISH;
     }
-    return BAD_REQUEST;
+
 }
 
-HttpRequest::HTTP_CODE HttpRequest::parse_body(const std::string& text)
+void HttpRequest::parse_body(const std::string& text)
 {
     m_request_body=text;
 
@@ -66,12 +81,27 @@ HttpRequest::HTTP_CODE HttpRequest::parse_body(const std::string& text)
     //to do parse body
 
 
-    m_parse_state=FINISH;
-    return NO_REQUEST;
+
 }
 
-HttpRequest::LINE_STATUS HttpRequest::parse_line()
+
+
+bool HttpRequest::check_method()
 {
-    return LINE_OK;
+    if(m_method=="POST" && header_kv.contains("Content-Length")){
+        return true;
+    }
+    return false;
 }
+
+void HttpRequest::parse_uri()
+{
+    if(m_uri == "/") {
+           m_uri = "/index.html";
+       }
+}
+
+
+
+
 

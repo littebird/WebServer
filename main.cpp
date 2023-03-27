@@ -3,6 +3,9 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio/steady_timer.hpp>
+
+#include <regex>
+
 #include <array>
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
@@ -33,11 +36,46 @@ public:
             return;
         }
 
-        _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error));
+//        _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+
+        auto read_buffer=std::make_shared<boost::asio::streambuf>();
+        boost::asio::async_read_until(*_socket, *read_buffer, "\r\n\r\n",
+                          [this, _socket, read_buffer](const boost::system::error_code &ec,std::size_t bytes_transferred) {
+                              if (!ec) {
+
+                                  std::size_t total = read_buffer->size();
+
+                                  std::cout<<"total:"<<total<<std::endl;
+                                  std::cout<<"bytes_transferred:"<<bytes_transferred<<std::endl;
+                                  // 转换到 istream
+                                  std::istream stream(read_buffer.get());
+
+                                  std::size_t num_additional_bytes = total - bytes_transferred;
+
+                                  std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
+
+
+                                    std::string line;
+                                  while(getline(stream,line)){
+
+
+                                      line.pop_back();
+                                      std::cout<<line<<std::endl;
+
+                                  }
+
+
+
+
+
+                                      }
+
+                                  });
+
 
     }
 
-    void handle_read(std::shared_ptr<tcp::socket> _socket,const boost::system::error_code& error){
+    void handle_read(std::shared_ptr<tcp::socket> _socket,const boost::system::error_code& error,std::size_t bytes_transferred){
         if(!error){
             std::cout<<m_readbuf<<std::endl;
             std::cout<<"successeful!\n";
@@ -73,6 +111,7 @@ public:
     {
         error_code ec;
        //to do close connect
+        m_socket->close();
     }
 
     void cancel_timeout() noexcept //取消超时
