@@ -23,6 +23,7 @@ public:
     void start_accept(){
 
         std::cout<<"wait for client request...\n";
+        m_acceptor.listen(boost::asio::socket_base::max_connections);
         m_acceptor.async_accept(*m_socket,boost::bind(&Http_server::handle_accept,this,m_socket,boost::asio::placeholders::error/*占位符*/));  //异步等待连接
 
     }
@@ -36,41 +37,38 @@ public:
             return;
         }
 
-//        _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 
-        auto read_buffer=std::make_shared<boost::asio::streambuf>();
-        boost::asio::async_read_until(*_socket, *read_buffer, "\r\n\r\n",
-                          [this, _socket, read_buffer](const boost::system::error_code &ec,std::size_t bytes_transferred) {
-                              if (!ec) {
+//        auto read_buffer=std::make_shared<boost::asio::streambuf>();
+//        boost::asio::async_read_until(*_socket, *read_buffer, "\r\n\r\n",
+//                          [this, _socket, read_buffer](const boost::system::error_code &ec,std::size_t bytes_transferred) {
+//                              if (!ec) {
 
-                                  std::size_t total = read_buffer->size();
+//                                  std::size_t total = read_buffer->size();
 
-                                  std::cout<<"total:"<<total<<std::endl;
-                                  std::cout<<"bytes_transferred:"<<bytes_transferred<<std::endl;
-                                  // 转换到 istream
-                                  std::istream stream(read_buffer.get());
+//                                  std::cout<<"total:"<<total<<std::endl;
+//                                  std::cout<<"bytes_transferred:"<<bytes_transferred<<std::endl;
+//                                  // 转换到 istream
+//                                  std::istream stream(read_buffer.get());
 
-                                  std::size_t num_additional_bytes = total - bytes_transferred;
+//                                  std::size_t num_additional_bytes = total - bytes_transferred;
 
-                                  std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
-
-
-                                    std::string line;
-                                  while(getline(stream,line)){
+//                                  std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
 
 
-                                      line.pop_back();
-                                      std::cout<<line<<std::endl;
-
-                                  }
+//                                    std::string line;
+//                                  while(getline(stream,line)){
 
 
+//                                      line.pop_back();
+//                                      std::cout<<line<<std::endl;
 
+//                                  }
 
+//                                 }
 
-                                      }
+//                                  });
 
-                                  });
 
 
     }

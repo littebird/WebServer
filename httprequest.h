@@ -53,11 +53,11 @@ private:
     void parse_body(const std::string& text);         //解析请求体
     bool check_method();    //检查请求方法
     void parse_uri();       //解析uri
+    std::string decode(const std::string& text);       //百分号解码
 
 
 
     std::string m_request_line;   //请求行-
-//    std::vector<std::string> m_request_header;//请求头-
     std::map<std::string,std::string> header_kv;   //请求头中的键值对
     std::string m_request_body;   //请求体
 
@@ -68,6 +68,8 @@ private:
     std::string m_path;       //请求资源路径-
     bool m_keepAlive;         //长连接
     std::string m_query_string; //uri中携带的参数-
+
+
 
 
 
