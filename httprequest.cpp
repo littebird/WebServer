@@ -16,6 +16,7 @@ bool HttpRequest::keepAlive() const
 void HttpRequest::init()
 {
     m_parse_state=REQUEST_LINE;
+    //初始化数据
 }
 
 HttpRequest::HTTP_CODE HttpRequest::parse_request(std::istream& readbuf)
@@ -27,9 +28,9 @@ HttpRequest::HTTP_CODE HttpRequest::parse_request(std::istream& readbuf)
         switch (m_parse_state)
         {
         case REQUEST_LINE:
-            if(!parse_request_line(line));
+            if(!parse_request_line(line))
                 return BAD_REQUEST;
-
+            parse_uri();
             break;
         case HEADERS:
             parse_header(line);
@@ -77,7 +78,7 @@ void HttpRequest::parse_body(const std::string& text)
 {
     //post request
     if(m_method=="POST"&&header_kv["content-Type"]=="application/x-www-form-urlencoded"){
-        m_request_body=decode(text);
+//        m_request_body=decode(text);
 
     }
 
@@ -100,7 +101,26 @@ void HttpRequest::parse_uri()
     if(m_uri == "/") {
            m_uri = "/index.html";//初始页面
     }
+
+    if(m_method=="GET"){
+        std::size_t pos=m_uri.find('?');
+        if(pos!=std::string::npos){//未到字符串尾，就找到？
+            //uri中有querystring
+            m_path=m_uri.substr(0,pos);
+            m_query_string=m_uri.substr(pos+1);
+            parse_query_string(m_query_string);
+
+        }else//uri中不带参数
+            m_path=m_uri;
+
+    }else if (m_method=="POST") {
+            m_path=m_uri;
+    }
+
+
+
 }
+
 
 std::string HttpRequest::decode(const std::string& text)
 {
@@ -120,6 +140,36 @@ std::string HttpRequest::decode(const std::string& text)
             result += chr;
     }
     return result;
+
+}
+void HttpRequest::parse_query_string(const std::string& text)
+{
+    std::size_t key_pos=0;
+    std::size_t key_end_pos=0;
+    std::size_t value_pos=0;
+
+    for(std::size_t pos=0;pos<text.size();++pos){
+        if(text[pos]=='='){
+            key_end_pos=pos;//键结束的位置
+            value_pos=pos+1;//值的位置
+        }else if(text[pos]=='&'){//分隔标志符
+            auto key=text.substr(key_pos,(key_end_pos-key_pos));//获得键
+            if(!key.empty()){
+                auto value=text.substr(value_pos,pos-value_pos);//获得值
+                query_kv[key]=decode(value);//放入query_kv
+            }
+            key_pos=pos+1;
+            key_end_pos=0;
+            value_pos=0;
+        }
+    }
+    if(key_pos<text.size()){//最后一个键值
+        auto key=text.substr(key_pos,key_end_pos-key_pos);
+        if(!key.empty()){
+            auto value=text.substr(value_pos);
+            query_kv[key]=decode(value);
+        }
+    }
 
 }
 

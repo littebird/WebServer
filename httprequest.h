@@ -4,7 +4,7 @@
 #include<iostream>
 #include<vector>
 #include <regex>
-#include<map>
+#include<unordered_map>
 
 //http请求类
 class HttpRequest
@@ -53,21 +53,23 @@ private:
     void parse_body(const std::string& text);         //解析请求体
     bool check_method();    //检查请求方法
     void parse_uri();       //解析uri
+    void parse_query_string(const std::string& text);   //解析查询字符串
     std::string decode(const std::string& text);       //百分号解码
 
 
 
-    std::string m_request_line;   //请求行-
-    std::map<std::string,std::string> header_kv;   //请求头中的键值对
+    std::string m_request_line;   //请求行
+    std::unordered_map<std::string,std::string> header_kv;   //请求头中的键值对
     std::string m_request_body;   //请求体
 
     //解析request请求
     std::string m_method;     //请求方法
     std::string m_uri;        //uri
     std::string m_version;    //版本号
-    std::string m_path;       //请求资源路径-
+    std::string m_path;       //请求资源路径
     bool m_keepAlive;         //长连接
-    std::string m_query_string; //uri中携带的参数-
+    std::string m_query_string; //uri中携带的参数
+    std::unordered_map<std::string,std::string> query_kv;
 
 
 
