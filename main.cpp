@@ -1,14 +1,9 @@
 //a webserver by c++ implement
 #include <iostream>
-#include <boost/asio.hpp>
-#include <boost/array.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include "session.h"
-
 int main()
 {
+
 
     try {
 //        boost::asio::io_context io;

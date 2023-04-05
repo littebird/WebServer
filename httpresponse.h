@@ -2,8 +2,9 @@
 #define HTTPRESPONSE_H
 #include<iostream>
 #include<vector>
-#include<boost/asio/buffer.hpp>
-#include<map>
+#include<boost/asio/streambuf.hpp>
+#include<unordered_map>
+
 
 // HTTP Status codes
 namespace CODE_STATUS {
@@ -49,27 +50,34 @@ inline std::string get_string(value code) {
 }
 }
 
+
 //http响应类
 class HttpResponse
 {
 public:
-    HttpResponse();
+    explicit HttpResponse(const std::string& root);
     ~HttpResponse();
+
 
     void addStatusLine();
     void addHeader();
     void addBody();
-
+    void buildResponse();
 
     std::string m_status_line;     //状态行
     std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
 
-    std::string rootPath;   //网站根路径
-    std::string srcDir;     //资源目录
+    std::string m_path;   //路径
+    std::string doc_root;     //根目录
     int file_fd;            //资源文件描述符
     CODE_STATUS::value m_status_code;        //状态码
     bool keepAlive;         //长连接
+
+    std::shared_ptr<boost::asio::streambuf> buffer;
+
+    std::string get_type(const std::string& suffix);//根据后缀获取资源类型
+
 
 
 };

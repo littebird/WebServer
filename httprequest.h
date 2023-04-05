@@ -6,10 +6,12 @@
 #include <regex>
 #include<unordered_map>
 
+
 //http请求类
 class HttpRequest
 {
 public:
+
     HttpRequest();
     ~HttpRequest();
 
@@ -42,7 +44,10 @@ public:
     std::string version()const{
         return m_version;
     }
-    bool keepAlive()const;
+    bool keepAlive()const{
+        return m_keepAlive;
+    }
+    bool  isKeepAlive();
 
     void init();
 
@@ -70,9 +75,6 @@ private:
     bool m_keepAlive;         //长连接
     std::string m_query_string; //uri中携带的参数
     std::unordered_map<std::string,std::string> query_kv;
-
-
-
 
 
     PARSE_STATE m_parse_state;  //解析请求主状态机的状态
