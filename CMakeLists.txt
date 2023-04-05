@@ -15,7 +15,9 @@ add_executable( WebServer )
 
 target_sources( WebServer PRIVATE 
                 main.cpp httprequest.cpp httprequest.h
-                httpresponse.cpp httpresponse.h )
+                httpresponse.cpp httpresponse.h
+                task.h task.cpp
+                threadpool.cpp threadpool.h)
                 
 target_compile_features( WebServer PRIVATE cxx_std_20 )
 #target_compile_options( WebServer PRIVATE -fmodules-ts )

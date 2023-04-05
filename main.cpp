@@ -4,6 +4,9 @@
 #include <boost/bind.hpp>
 #include <unistd.h>
 #include <array>
+#include<thread>
+#include<vector>
+#include"threadpool.h"
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
 using boost::system::error_code;
@@ -14,12 +17,12 @@ public:
     explicit Http_server(boost::asio::io_context& io_context)
         :m_io_context(io_context),m_acceptor(io_context,tcp::endpoint(tcp::v4(),8888)),m_socket(new tcp::socket(io_context))
     {
-            start_accept();
+        //start_accept();
     }
 
     void start_accept(){
-//        std::shared_ptr<tcp::socket> socket(new tcp::socket(m_io_context));
-        std::cout<<"wait for client request...\n";
+        //        std::shared_ptr<tcp::socket> socket(new tcp::socket(m_io_context));
+//        std::cout<<"wait for client request...\n";
         m_acceptor.async_accept(*m_socket,boost::bind(&Http_server::handle_accept,this,m_socket,boost::asio::placeholders::error/*占位符*/));  //异步等待连接
 
     }
@@ -35,9 +38,6 @@ public:
 
         _socket->async_read_some(buffer(m_readbuf,MAX_length),boost::bind(&Http_server::handle_read,this,_socket,boost::asio::placeholders::error));
 
-
-
-//        start_accept();
     }
 
     void handle_read(std::shared_ptr<tcp::socket> _socket,const boost::system::error_code& error){
@@ -106,8 +106,15 @@ int main()
     try {
         boost::asio::io_context io;
         Http_server http_server(io);
+//        boost::asio::io_context::work worker(io);
+//        boost::shared_ptr< boost::asio::io_service::work > work(new boost::asio::io_service::work( io ));
+        while(true)
+        {
+            http_server.start_accept();
 
-        http_server.run();
+            http_server.run();
+
+        }
 
     }  catch (std::exception &e) {
         std::cout<<e.what()<<"\n";
