@@ -15,16 +15,22 @@ add_executable( WebServer )
 
 target_sources( WebServer PRIVATE 
                 main.cpp httprequest.cpp httprequest.h
-                httpresponse.cpp httpresponse.h resource)
+                httpresponse.cpp httpresponse.h )
                 
 target_compile_features( WebServer PRIVATE cxx_std_20 )
+target_compile_definitions(WebServer
+    PRIVATE
+        BOOST_ASIO_HAS_IO_URING=1
+        BOOST_ASIO_DISABLE_EPOLL=1
+ )
+
 #target_compile_options( WebServer PRIVATE -fmodules-ts )
 
 #target_include_directories( WebServer PRIVATE /usr/include )
 
 #target_link_directories( WebServer PRIVATE /usr/lib )
 
-#target_link_libraries( WebServer PRIVATE m )
+target_link_libraries( WebServer PRIVATE uring )
 
 #set_target_properties( WebServer PROPERTIES
             #CXX_STANDARD 20

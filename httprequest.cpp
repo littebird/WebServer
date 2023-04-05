@@ -5,7 +5,7 @@ HttpRequest::HttpRequest()
 
 }
 
-bool HttpRequest::keepAlive() const
+bool HttpRequest::isKeepAlive()
 {
     if(header_kv.count("Connection") == 1) {
         return header_kv.find("Connection")->second == "keep-alive" && m_version == "1.1";
@@ -34,7 +34,7 @@ HttpRequest::HTTP_CODE HttpRequest::parse_request(std::istream& readbuf)
             break;
         case HEADERS:
             parse_header(line);
-            m_keepAlive=keepAlive();
+            m_keepAlive=isKeepAlive();
             break;
 
         default:
@@ -77,13 +77,10 @@ void HttpRequest::parse_header(const std::string& text)
 void HttpRequest::parse_body(const std::string& text)
 {
     //post request
-    if(m_method=="POST"&&header_kv["content-Type"]=="application/x-www-form-urlencoded"){
-//        m_request_body=decode(text);
+    if(m_method=="POST"&&header_kv["content-Type"]=="application/x-www-form-urlencoded"){//请求体body中使用了url编码
+        m_request_body=decode(text);
 
     }
-
-
-
 }
 
 
@@ -145,8 +142,8 @@ std::string HttpRequest::decode(const std::string& text)
 void HttpRequest::parse_query_string(const std::string& text)
 {
     std::size_t key_pos=0;
-    std::size_t key_end_pos=0;
-    std::size_t value_pos=0;
+    auto key_end_pos=std::string::npos;
+    auto value_pos=std::string::npos;
 
     for(std::size_t pos=0;pos<text.size();++pos){
         if(text[pos]=='='){
@@ -159,8 +156,8 @@ void HttpRequest::parse_query_string(const std::string& text)
                 query_kv[key]=decode(value);//放入query_kv
             }
             key_pos=pos+1;
-            key_end_pos=0;
-            value_pos=0;
+            key_end_pos=std::string::npos;//重置key_end_pos和value_pos
+            value_pos=std::string::npos;
         }
     }
     if(key_pos<text.size()){//最后一个键值

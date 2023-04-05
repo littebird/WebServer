@@ -3,13 +3,14 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio/steady_timer.hpp>
-
 #include <regex>
+#include <boost/asio/detail/io_uring_socket_sendto_op.hpp>
 
 #include <array>
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
 using boost::system::error_code;
+
 
 class Http_server: public std::enable_shared_from_this<Http_server>
 {
@@ -18,7 +19,9 @@ public:
         :m_io_context(io_context),m_acceptor(io_context,tcp::endpoint(tcp::v4(),8888)),m_socket(new tcp::socket(io_context))
     {
             start_accept();
+
     }
+
 
     void start_accept(){
 
@@ -78,16 +81,32 @@ public:
             std::cout<<m_readbuf<<std::endl;
             std::cout<<"successeful!\n";
 
-            std::string reply="HTTP/1.1 200 OK\r\n";
-            reply +="Server:httpserver\r\n";
-            reply +="Content-type:text-html\r\n";
+//            auto read_buffer=std::make_shared<boost::asio::streambuf>();
+//            std::ostream os(read_buffer.get());
 
-            reply +="\r\n";//空行
-            reply +=" hello cc";
+
+//            os<<"HTTP/1.1 200 OK\r\n";
+//            os<<"Server:httpserver\r\n";
+//            os<<"Content-type:text-html\r\n";
+
+//            os<<"\r\n";//空行
+//            os<<"<html><body bgcolor=white>this is the html.<hr><p>hello word! web! </p><br></body></html>";
+
+//            auto data_ptr = boost::asio::buffer_cast<const char* >(read_buffer->data());
+
+
+            std::string reply;
+            reply+="HTTP/1.1 200 OK\r\n";
+            reply+="Server:httpserver\r\n";
+            reply+="Content-type:text-html\r\n";
+            reply+="\r\n";//空行
+            reply+="<html><body bgcolor=white>this is the html.<hr><p>hello word! web! </p><br></body></html>";
+
             memcpy(m_readbuf,reply.c_str(),reply.size());
 
 
-            _socket->async_write_some(buffer(reply,reply.size()),boost::bind(&Http_server::handle_write,this,_socket,boost::asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
+
+            _socket->async_write_some(buffer(m_readbuf,reply.size()),boost::bind(&Http_server::handle_write,this,_socket,boost::asio::placeholders::error,boost::asio::placeholders::bytes_transferred));
 
 
 
@@ -151,6 +170,7 @@ private:
 
 int main()
 {
+
 
     try {
         boost::asio::io_context io;
