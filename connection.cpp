@@ -16,6 +16,7 @@ boost::asio::ip::tcp::socket& Connection::socket()
 
 void Connection::start()
 {
+    //异步读取请求数据
   socket_.async_read_some(boost::asio::buffer(m_readbuf,MAX_length),
       boost::bind(&Connection::handle_read, shared_from_this(),
         boost::asio::placeholders::error,
@@ -34,6 +35,7 @@ void Connection::handle_read(const boost::system::error_code& error,std::size_t 
         reply +="\r\n";//空行
         reply +="hello.c";
         memcpy(m_readbuf,reply.c_str(),reply.size());
+        //异步写响应数据
         boost::asio::async_write(socket_,boost::asio::buffer(m_readbuf,reply.size()),
                                   boost::bind(&Connection::handle_write,
                                   shared_from_this(),
@@ -54,6 +56,7 @@ void Connection::handle_write(const boost::system::error_code& e)
     if (!e)
       {
         boost::system::error_code ignored_ec;
+        //关闭双方连接
         socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
       }
 
