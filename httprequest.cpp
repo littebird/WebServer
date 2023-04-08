@@ -77,7 +77,7 @@ void HttpRequest::parse_header(const std::string& text)
 void HttpRequest::parse_body(const std::string& text)
 {
     //post request
-    if(m_method=="POST"&&header_kv["content-Type"]=="application/x-www-form-urlencoded"){//请求体body中使用了url编码
+    if(m_method=="POST"&&header_kv["Content-Type"]=="application/x-www-form-urlencoded"){//请求体body中使用了url编码
         m_request_body=decode(text);
 
     }
@@ -96,7 +96,7 @@ bool HttpRequest::check_method()
 void HttpRequest::parse_uri()
 {
     if(m_uri == "/") {
-           m_uri = "/index.html";//初始页面
+           m_uri += "index.html";//初始页面
     }
 
     if(m_method=="GET"){

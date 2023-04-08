@@ -13,7 +13,7 @@ class HttpRequest
 public:
 
     HttpRequest();
-    ~HttpRequest();
+
 
     //解析请求时，主状态机的状态
     enum PARSE_STATE {
@@ -44,6 +44,9 @@ public:
     std::string version()const{
         return m_version;
     }
+    std::string path()const{
+        return m_path;
+    }
     bool keepAlive()const{
         return m_keepAlive;
     }
@@ -51,7 +54,6 @@ public:
 
     void init();
 
-private:
     HTTP_CODE parse_request(std::istream& readbuf);      //主状态机,解析请求
     bool parse_request_line(const std::string& text); //解析请求首行
     void parse_header(const std::string& text);       //解析请求头
@@ -74,7 +76,7 @@ private:
     std::string m_path;       //请求资源路径
     bool m_keepAlive;         //长连接
     std::string m_query_string; //uri中携带的参数
-    std::unordered_map<std::string,std::string> query_kv;
+    std::unordered_map<std::string,std::string> query_kv;//存储解析参数后的数据
 
 
     PARSE_STATE m_parse_state;  //解析请求主状态机的状态
