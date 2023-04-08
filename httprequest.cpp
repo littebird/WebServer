@@ -1,6 +1,6 @@
 #include "httprequest.h"
 
-HttpRequest::HttpRequest()
+HttpRequest::HttpRequest():is(&read_buffer)
 {
 
 }
@@ -19,11 +19,13 @@ void HttpRequest::init()
     //初始化数据
 }
 
-HttpRequest::HTTP_CODE HttpRequest::parse_request(std::istream& readbuf)
+HttpRequest::HTTP_CODE HttpRequest::parse_request()
 {
+
+
     std::string line;
 
-    while(getline(readbuf,line)&& m_parse_state != FINISH){
+    while(getline(is,line)&& m_parse_state != FINISH){
         line.pop_back();//去掉'/r'
         switch (m_parse_state)
         {
