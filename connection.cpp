@@ -16,10 +16,6 @@ boost::asio::ip::tcp::socket& Connection::socket()
 
 void Connection::start()
 {
-//  socket_.async_read_some(boost::asio::buffer(m_readbuf,MAX_length),
-//      boost::bind(&Connection::handle_read, shared_from_this(),
-//        boost::asio::placeholders::error,
-//        boost::asio::placeholders::bytes_transferred));
 
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
     boost::asio::async_read_until(socket_, *read_buffer, "\r\n\r\n",
@@ -28,56 +24,11 @@ void Connection::start()
                    boost::asio::placeholders::error,
                    boost::asio::placeholders::bytes_transferred));
 
-//        if (!ec) {
-
-//            std::size_t total = read_buffer->size();
-
-//            std::cout<<"total:"<<total<<std::endl;
-//            std::cout<<"bytes_transferred:"<<bytes_transferred<<std::endl;
-//            // 转换到 istream
-//            std::istream stream(read_buffer.get());
-
-//            std::size_t num_additional_bytes = total - bytes_transferred;
-
-//            std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
-
-
-//            std::string line;
-//            while(getline(stream,line)){
-
-
-//                line.pop_back();
-//                std::cout<<line<<std::endl;
-
-//            }
-
-//        }
-
-
-
 
 }
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& error,std::size_t bytes_transferred)
 {
-//    if(!error){
-//        std::cout<<m_readbuf<<std::endl;
-//        std::cout<<"successeful!\n";
-//        std::cout<<std::this_thread::get_id()<<std::endl;
-//        std::string reply="HTTP/1.1 200 OK\r\n";
-//        reply +="Server:httpserver\r\n";
-//        reply +="Content-type:text-html\r\n";
-//        reply +="\r\n";//空行
-//        reply +="hello.c";
-//        memcpy(m_readbuf,reply.c_str(),reply.size());
-
-//        auto buf=std::make_shared<boost::asio::streambuf>();
-//        std::ostream os(buf.get());
-//        os<<"HTTP/1.1 200 OK\r\n";
-//        os<<"Server:httpserver\r\n";
-//        os<<"Content-type:text-html\r\n";
-//        os<<"\r\n";//空行
-//        os<<"hello.c";
     if (!error) {
 
         //read_buffer->size()不一定与传输的字节相等，有可能有其他数据

@@ -22,9 +22,6 @@ private:
     void handle_write(const boost::system::error_code& e);
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::asio::ip::tcp::socket socket_;
-//    enum{MAX_length=1024};
-//    char m_readbuf[MAX_length];//接收到的数据
-
     std::shared_ptr<HttpRequest> _request;
     std::shared_ptr<HttpResponse> _response;
 
