@@ -3,6 +3,7 @@
 #include<iostream>
 #include<vector>
 #include<boost/asio/streambuf.hpp>
+#include<fstream>
 #include<unordered_map>
 
 
@@ -55,26 +56,28 @@ inline std::string get_string(value code) {
 class HttpResponse
 {
 public:
-    explicit HttpResponse(const std::string& root);
-    ~HttpResponse();
-
+    explicit HttpResponse(const std::string& root,const std::string& path,bool keepalive);
+    HttpResponse();
 
     void addStatusLine();
     void addHeader();
     void addBody();
     void buildResponse();
+    void readFile();
 
-    std::string m_status_line;     //状态行
-    std::vector<std::string> m_response_header; //响应头
+//    std::string m_status_line;     //状态行
+//    std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
 
     std::string m_path;   //路径
-    std::string doc_root;     //根目录
-    int file_fd;            //资源文件描述符
+    std::string doc_root;     //资源目录
+//    int file_fd;            //资源文件描述符
+
     CODE_STATUS::value m_status_code;        //状态码
     bool keepAlive;         //长连接
 
-    std::shared_ptr<boost::asio::streambuf> buffer;
+    boost::asio::streambuf buffer;
+    std::ostream os;
 
     std::string get_type(const std::string& suffix);//根据后缀获取资源类型
 

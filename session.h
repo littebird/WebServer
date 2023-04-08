@@ -6,7 +6,7 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include<thread>
+#include <thread>
 #include <boost/bind.hpp>
 #include "connection.h"
 class Session: private boost::noncopyable
