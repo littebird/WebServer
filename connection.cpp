@@ -17,13 +17,13 @@ boost::asio::ip::tcp::socket& Connection::socket()
 void Connection::start()
 {
 
+    //异步读取请求数据，直到空行
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
     boost::asio::async_read_until(socket_, *read_buffer, "\r\n\r\n",
                  boost::bind(&Connection::handle_read,
                    shared_from_this(),read_buffer,
                    boost::asio::placeholders::error,
                    boost::asio::placeholders::bytes_transferred));
-
 
 }
 
@@ -70,6 +70,7 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
 
         _response->buildResponse();
 
+        //异步写响应数据
         boost::asio::async_write(socket_,_response->buffer,
                                   boost::bind(&Connection::handle_write,
                                   shared_from_this(),
@@ -90,6 +91,7 @@ void Connection::handle_write(const boost::system::error_code& e)
     if (!e)
       {
         boost::system::error_code ignored_ec;
+        //关闭双方连接
         socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
       }
 
