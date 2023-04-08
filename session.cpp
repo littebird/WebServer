@@ -1,5 +1,5 @@
 #include "session.h"
-
+#include <boost/asio/basic_signal_set.hpp>
 #include<iostream>
 using boost::asio::ip::tcp;
 using boost::asio::buffer;
@@ -7,8 +7,15 @@ using boost::system::error_code;
 Session::Session(const std::string& address, const std::string& port)
     :
     acceptor_(io_context_),
-    new_connection_(new Connection(io_context_))
+    new_connection_(new Connection(io_context_)),
+    signals_(io_context_)
 {
+    signals_.add(SIGINT);
+     signals_.add(SIGTERM);
+#if defined(SIGQUIT)
+      signals_.add(SIGQUIT);
+#endif // defined(SIGQUIT)
+    signals_.async_wait(boost::bind(&Session::handle_stop, this));
     boost::asio::ip::tcp::resolver resolver(io_context_);
      boost::asio::ip::tcp::endpoint endpoint =
        *resolver.resolve(address, port).begin();//ip和端口号

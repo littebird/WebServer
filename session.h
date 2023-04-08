@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <boost/noncopyable.hpp>
+#include <boost/asio/basic_signal_set.hpp>
 #include <boost/shared_ptr.hpp>
 #include<thread>
 #include <boost/bind.hpp>
@@ -23,6 +24,7 @@ private:
     boost::asio::ip::tcp::acceptor acceptor_;//用于指定端口接受连接
 //     connection_ptr new_connection_;
     boost::shared_ptr<Connection> new_connection_;//Connection类的智能指针
+    boost::asio::signal_set signals_;
 };
 
 #endif // SESSION_H
