@@ -26,6 +26,7 @@ void HttpResponse::addHeader()
     if(keepAlive)
         os<<"Connection:keep-alive"<<CRLF;
     else os<<"Connection:close"<<CRLF;
+
     os<<"Content-type:"<<get_type(m_path)<<CRLF;
 
     if(!m_response_body.empty())

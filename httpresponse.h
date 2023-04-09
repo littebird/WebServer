@@ -53,7 +53,7 @@ inline std::string get_string(value code) {
 
 
 //http响应类
-class HttpResponse
+class HttpResponse: public std::enable_shared_from_this<HttpResponse>
 {
 public:
     explicit HttpResponse(const std::string& root,const std::string& path,bool keepalive);

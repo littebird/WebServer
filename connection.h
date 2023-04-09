@@ -20,7 +20,7 @@ public:
     boost::asio::ip::tcp::socket& socket();
     void start();//读请求内容
 private:
-    void handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& e,std::size_t bytes_transferred);
+    void handle_read(const boost::system::error_code& e,std::size_t bytes_transferred);
     void handle_write(const boost::system::error_code& e);
     boost::asio::strand<boost::asio::io_context::executor_type> strand_;//并发事件，使事件能够顺序执行
     boost::asio::ip::tcp::socket socket_;//socket套接字

@@ -3,7 +3,8 @@
 
 #include<iostream>
 #include<vector>
-#include <regex>
+#include<regex>
+#include<boost/asio/streambuf.hpp>
 #include<unordered_map>
 
 
@@ -54,7 +55,7 @@ public:
 
     void init();
 
-    HTTP_CODE parse_request(std::istream& readbuf);      //主状态机,解析请求
+    HTTP_CODE parse_request();      //主状态机,解析请求
     bool parse_request_line(const std::string& text); //解析请求首行
     void parse_header(const std::string& text);       //解析请求头
     void parse_body(const std::string& text);         //解析请求体
@@ -64,6 +65,8 @@ public:
     std::string decode(const std::string& text);       //百分号解码
 
 
+    boost::asio::streambuf read_buffer;
+    std::istream is;
 
     std::string m_request_line;   //请求行
     std::unordered_map<std::string,std::string> header_kv;   //请求头中的键值对
