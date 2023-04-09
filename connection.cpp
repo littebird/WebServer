@@ -16,7 +16,6 @@ boost::asio::ip::tcp::socket& Connection::socket()
 
 void Connection::start()
 {
-
     //异步读取请求数据，直到空行
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
     boost::asio::async_read_until(socket_, *read_buffer, "\r\n\r\n",
@@ -24,7 +23,7 @@ void Connection::start()
                    shared_from_this(),read_buffer,
                    boost::asio::placeholders::error,
                    boost::asio::placeholders::bytes_transferred));
-
+//    read_buffer.reset(new boost::asio::streambuf());
 }
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& error,std::size_t bytes_transferred)
@@ -35,13 +34,15 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         std::size_t total = read_buffer->size();//读到的总大小
 
         // 转换到 istream
-        std::istream stream(read_buffer.get());
 
+        std::istream stream(read_buffer.get());
+        //std::cout<<stream;
         std::size_t num_additional_bytes = total - bytes_transferred;
 
         std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
 
         _request=std::make_shared<HttpRequest>();
+        _request->init();
         _request->parse_request(stream);//解析请求
 
 
