@@ -4,7 +4,6 @@
 #include<iostream>
 #include<vector>
 #include<regex>
-#include<boost/asio/streambuf.hpp>
 #include<unordered_map>
 
 
@@ -20,6 +19,7 @@ public:
     enum PARSE_STATE {
             REQUEST_LINE,
             HEADERS,
+            BODY,
             FINISH,
         };
     //http请求解析结果
@@ -48,6 +48,9 @@ public:
     std::string path()const{
         return m_path;
     }
+    std::string request_body()const{
+        return m_request_body;
+    }
     bool keepAlive()const{
         return m_keepAlive;
     }
@@ -55,7 +58,7 @@ public:
 
     void init();
 
-    HTTP_CODE parse_request();      //主状态机,解析请求
+    HTTP_CODE parse_request(std::istream& is);      //主状态机,解析请求
     bool parse_request_line(const std::string& text); //解析请求首行
     void parse_header(const std::string& text);       //解析请求头
     void parse_body(const std::string& text);         //解析请求体
@@ -64,13 +67,13 @@ public:
     void parse_query_string(const std::string& text);   //解析查询字符串
     std::string decode(const std::string& text);       //百分号解码
 
+    void errorRes();//错误请求
 
-    boost::asio::streambuf read_buffer;
-    std::istream is;
-
-    std::string m_request_line;   //请求行
     std::unordered_map<std::string,std::string> header_kv;   //请求头中的键值对
-    std::string m_request_body;   //请求体
+
+
+private:
+    std::string m_request_body; //请求体
 
     //解析request请求
     std::string m_method;     //请求方法
