@@ -10,8 +10,8 @@
 #include <thread>
 #include <boost/bind.hpp>
 #include "connection.h"
-//
-class Session: private boost::noncopyable
+
+class Session: private boost::noncopyable//不可拷贝类
 {
 public:
     Session(const std::string& address, const std::string& port);
@@ -22,7 +22,6 @@ private:
     void handle_stop();//关闭io
     boost::asio::io_context io_context_;//io服务
     boost::asio::ip::tcp::acceptor acceptor_;//用于指定端口接受连接
-//     connection_ptr new_connection_;
     boost::shared_ptr<Connection> new_connection_;//Connection类的智能指针
     boost::asio::signal_set signals_;
 };

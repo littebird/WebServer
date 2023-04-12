@@ -1,20 +1,22 @@
+#include <chrono>
 #include "httpresponse.h"
+
 #define CRLF "\r\n"
 
-HttpResponse::HttpResponse(const std::string& root,const std::string& path,bool keepalive):doc_root(root),m_path(path),keepAlive(keepalive),os(&buffer)
+HttpResponse::HttpResponse(const std::string& root,const std::string& path,bool keepalive):doc_root(root),m_path(path),keepAlive(keepalive),std::ostream(&buffer)
 {
     m_status_code=CODE_STATUS::value::uninitialized;
 
 }
 
-HttpResponse::HttpResponse():os(&buffer)
+HttpResponse::HttpResponse():std::ostream(&buffer)
 {
 
 }
 
 void HttpResponse::addStatusLine()
 {
-    os<<"HTTP/1.1 "<<m_status_code<<" "<<CODE_STATUS::get_string(m_status_code)<<CRLF;//响应状态行
+    *this<<"HTTP/1.1 "<<m_status_code<<" "<<CODE_STATUS::get_string(m_status_code)<<CRLF;//响应状态行
 
 
 
@@ -22,17 +24,19 @@ void HttpResponse::addStatusLine()
 
 void HttpResponse::addHeader()
 {
-    os<<"Server:webserver"<<CRLF;
-    if(keepAlive)
-        os<<"Connection:keep-alive"<<CRLF;
-    else os<<"Connection:close"<<CRLF;
+    *this<<"Server: webserver"<<CRLF;
 
-    os<<"Content-type:"<<get_type(m_path)<<CRLF;
+    *this<<"Date: "<<_curTime<<CRLF;
+    if(keepAlive)
+        *this<<"Connection: keep-alive"<<CRLF;
+    else *this<<"Connection: close"<<CRLF;
+
+    *this<<"Content-type: "<<get_type(m_path)<<CRLF;
 
     if(!m_response_body.empty())
-        os<<"Content-length:"<<m_response_body.size()<<CRLF;
+        *this<<"Content-length: "<<m_response_body.size()<<CRLF;
 
-    os<<CRLF;//空行
+    *this<<CRLF;//空行
 
 }
 
@@ -40,7 +44,7 @@ void HttpResponse::addHeader()
 
 void HttpResponse::addBody()
 {
-    os<<m_response_body;
+    *this<<m_response_body;
 
 }
 void HttpResponse::readFile()
@@ -77,10 +81,10 @@ void HttpResponse::buildResponse()
 std::string HttpResponse::get_type(const std::string& path)
 {
     const std::unordered_map<std::string,std::string> suffix_type{
-        { ".html",  "text/html" },
-        { ".xml",   "text/xml" },
-        { ".xhtml", "application/xhtml+xml" },
-        { ".txt",   "text/plain" },
+        { ".html",  "text/html; charset=utf-8" },
+        { ".xml",   "text/xml; charset=utf-8" },
+        { ".xhtml", "application/xhtml+xml; charset=utf-8" },
+        { ".txt",   "text/plain; charset=utf-8" },
         { ".pdf",   "application/pdf" },
         { ".png",   "image/png" },
         { ".gif",   "image/gif" },
@@ -88,6 +92,8 @@ std::string HttpResponse::get_type(const std::string& path)
         { ".jpeg",  "image/jpeg" },
         { ".css",   "text/css "},
         { ".js",    "text/javascript "},
+        { ".json",  "application/json; charset=utf-8"},
+        { ".plain", "text/plain; charset=utf-8"}
     };
     auto findpos=path.find_last_of('.');//找到文件路径的后缀位置
     if(findpos!=std::string::npos){//如果存在
