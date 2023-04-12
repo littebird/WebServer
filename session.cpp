@@ -59,8 +59,10 @@ void Session::handle_accept(const boost::system::error_code& e)
     //异步读取请求数据
     new_connection_->start();
   }
-
-
+  else
+  {
+      std::cout<<"error:2"<<e.message()<<std::endl;
+  }
   start_accept();
 }
 

@@ -34,7 +34,7 @@ void Connection::handle_read(const boost::system::error_code& error,std::size_t 
 
         //read_buffer->size()不一定与传输的字节相等，有可能有其他数据
         std::size_t total = _request->read_buffer.size();//读到的总大小
-        std::cout<<"total:"<<total<<std::endl;
+//        std::cout<<"total:"<<total<<std::endl;
 
 //        std::cout<<_request->read_buffer;
         std::size_t num_additional_bytes = total - bytes_transferred;//其他数据字节数
@@ -42,8 +42,8 @@ void Connection::handle_read(const boost::system::error_code& error,std::size_t 
 //        std::cout<<"num_additional_bytes:"<<num_additional_bytes<<std::endl;
         _request->init();//初始化状态
         _request->parse_request();//解析请求
-        std::string str=_request->m_path;
-        std::cout<<"_request->m_path:"<<str<<std::endl;
+//        std::string str=_request->m_path;
+//        std::cout<<"_request->m_path:"<<str<<std::endl;
 
        _response=std::make_shared<HttpResponse>("../WebServer/resource",_request->m_path,_request->keepAlive());
 
@@ -83,7 +83,7 @@ void Connection::handle_read(const boost::system::error_code& error,std::size_t 
     }
     else
     {
-        std::cout<<"error:"<<error.message()<<std::endl;
+        std::cout<<"error:!"<<error.message()<<std::endl;
     }
 }
 
