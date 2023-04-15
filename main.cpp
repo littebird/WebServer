@@ -3,8 +3,6 @@
 #include "session.h"
 int main()
 {
-
-
     try {
         const std::string& address="127.0.0.1";
         const std::string& port="80";

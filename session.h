@@ -2,7 +2,6 @@
 #define SESSION_H
 
 #include <boost/asio.hpp>
-#include <string>
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -19,7 +18,7 @@ private:
     void start_accept();//异步等待连接
     void handle_accept(const boost::system::error_code& e);//持续等待连接，进行递归调用
     void handle_stop();//关闭io
-    boost::asio::io_context io_context_;//io服务
+    boost::asio::io_context io_context_;//io上下文
     boost::asio::ip::tcp::acceptor acceptor_;//用于指定端口接受连接
     boost::shared_ptr<Connection> new_connection_;//Connection类的智能指针
 };

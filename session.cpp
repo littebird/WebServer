@@ -23,19 +23,20 @@ Session::Session(const std::string& address, const std::string& port)
 void Session::run()
 {
 
-  std::vector<std::shared_ptr<std::thread> > threads;//创建装多线程的vector容器
+  std::vector<std::shared_ptr<std::thread> > threads;//线程池
   for (std::size_t i = 0; i < 4; ++i)
   {
       //创建多个线程共享一个io_context,并在每个线程执行io_context.run()
       std::shared_ptr<std::thread> thread(new std::thread(
                                               boost::bind(&boost::asio::io_context::run, &io_context_)));
+
       threads.push_back(thread);
       //    std::cout<<thread->get_id()<<std::endl;
   }
+
   //等待创建线程结束
-  for (std::size_t i = 0; i < threads.size(); ++i)
-      threads[i]->join();
-//    io_context_.run();
+  for (auto& th:threads)
+      th->join();
 }
 
 void Session::start_accept()
@@ -54,13 +55,12 @@ void Session::handle_accept(const boost::system::error_code& e)
     new_connection_->start();
   }
 
-
-
   start_accept();
 }
 
 void Session::handle_stop()
 {
-  io_context_.stop();
+      io_context_.stop();
+
 }
 

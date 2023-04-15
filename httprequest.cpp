@@ -85,6 +85,8 @@ void HttpRequest::parse_body(const std::string& text)
         m_request_body=decode(text);
     }else m_request_body=text;
 
+    //to do store
+
     m_parse_state=FINISH;
 }
 

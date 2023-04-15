@@ -5,6 +5,7 @@
 #include<boost/asio/streambuf.hpp>
 #include<fstream>
 #include<unordered_map>
+#include<chrono>
 
 
 // HTTP Status codes
@@ -53,7 +54,7 @@ inline std::string get_string(value code) {
 
 
 //http响应类
-class HttpResponse: public std::enable_shared_from_this<HttpResponse>,public std::ostream
+class HttpResponse
 {
 public:
     explicit HttpResponse(const std::string& root,const std::string& path,bool keepalive);
@@ -69,15 +70,15 @@ public:
 //    std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
 
-    std::string _curTime;    //当前响应时间
+    std::chrono::system_clock::time_point _curTime;    //当前响应时间
     std::string m_path;   //路径
     std::string doc_root;     //资源目录
-//    int file_fd;            //资源文件描述符
 
     CODE_STATUS::value m_status_code;        //状态码
     bool keepAlive;         //长连接
 
     boost::asio::streambuf buffer;
+    std::ostream os;
 
     std::string get_type(const std::string& suffix);//根据后缀获取资源类型
 
