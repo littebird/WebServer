@@ -17,7 +17,10 @@ target_sources( WebServer PRIVATE
                 main.cpp httprequest.cpp httprequest.h
                 httpresponse.cpp httpresponse.h
                 connection.h connection.cpp
-                session.h session.cpp)
+                session.h session.cpp
+                log.h log.cpp
+                logs.h logs.cpp
+                log_queue.h log_queue.cpp)
 
 
                 

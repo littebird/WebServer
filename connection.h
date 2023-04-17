@@ -8,6 +8,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/bind.hpp>
+#include"log.h"
+#include"log_queue.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 

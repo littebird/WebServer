@@ -50,6 +50,8 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         std::string str=_request->request_body();
         std::cout<<str<<std::endl;
 
+        //Log log;
+
         _response=std::make_shared<HttpResponse>("../WebServer/resource",_request->path(),_request->keepAlive());
 
 //        auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());//获得当前时间并to time_t
@@ -65,8 +67,6 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
                                              boost::asio::placeholders::error
                                              )
                                  );
-
-
     }
 }
 
