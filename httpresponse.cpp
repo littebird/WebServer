@@ -3,20 +3,20 @@
 
 #define CRLF "\r\n"
 
-HttpResponse::HttpResponse(const std::string& root,const std::string& path,bool keepalive):doc_root(root),m_path(path),keepAlive(keepalive),std::ostream(&buffer)
+HttpResponse::HttpResponse(const std::string& root,const std::string& path,bool keepalive):doc_root(root),m_path(path),keepAlive(keepalive),os(&buffer)
 {
     m_status_code=CODE_STATUS::value::uninitialized;
 
 }
 
-HttpResponse::HttpResponse():std::ostream(&buffer)
+HttpResponse::HttpResponse():os(&buffer)
 {
 
 }
 
 void HttpResponse::addStatusLine()
 {
-    *this<<"HTTP/1.1 "<<m_status_code<<" "<<CODE_STATUS::get_string(m_status_code)<<CRLF;//响应状态行
+    os<<"HTTP/1.1 "<<m_status_code<<" "<<CODE_STATUS::get_string(m_status_code)<<CRLF;//响应状态行
 
 
 
@@ -24,19 +24,19 @@ void HttpResponse::addStatusLine()
 
 void HttpResponse::addHeader()
 {
-    *this<<"Server: webserver"<<CRLF;
+    os<<"Server: webserver"<<CRLF;
 
-    *this<<"Date: "<<_curTime<<CRLF;
+    os<<"Date: "<<CRLF;
     if(keepAlive)
-        *this<<"Connection: keep-alive"<<CRLF;
-    else *this<<"Connection: close"<<CRLF;
+        os<<"Connection: keep-alive"<<CRLF;
+    else os<<"Connection: close"<<CRLF;
 
-    *this<<"Content-type: "<<get_type(m_path)<<CRLF;
+    os<<"Content-type: "<<get_type(m_path)<<CRLF;
 
     if(!m_response_body.empty())
-        *this<<"Content-length: "<<m_response_body.size()<<CRLF;
+        os<<"Content-length: "<<m_response_body.size()<<CRLF;
 
-    *this<<CRLF;//空行
+    os<<CRLF;//空行
 
 }
 
@@ -44,7 +44,7 @@ void HttpResponse::addHeader()
 
 void HttpResponse::addBody()
 {
-    *this<<m_response_body;
+    os<<m_response_body;
 
 }
 void HttpResponse::readFile()
