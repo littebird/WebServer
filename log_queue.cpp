@@ -61,8 +61,7 @@ bool Log_Queue::pop(Log &item)
     std::unique_lock<std::mutex> lg(m_mutex);
     while(m_array.empty())
     {
-        m_cond.wait(lg);
-        return false;
+        m_cond.wait(lg);//线程等待
     }
     item=m_array.front();
     m_array.pop();

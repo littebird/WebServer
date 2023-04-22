@@ -4,35 +4,35 @@
 #include <string.h>
 #include <thread>
 Connection::Connection(boost::asio::io_context& io_context)
-  : strand_(boost::asio::make_strand(io_context)),
-    socket_(new boost::asio::ip::tcp::socket(io_context))
+    : strand_(boost::asio::make_strand(io_context)),
+      socket_(new boost::asio::ip::tcp::socket(io_context))
 {
 
 }
 
 boost::asio::ip::tcp::socket& Connection::socket()
 {
-  return *socket_;
+    return *socket_;
 }
 
 void Connection::start()
 {
 
-//    std::cout<<std::this_thread::get_id()<<std::endl;
+    //    std::cout<<std::this_thread::get_id()<<std::endl;
 
-//    auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());//获得当前时间并to time_t
-//    auto curTime(ctime(&time));
+    //    auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());//获得当前时间并to time_t
+    //    auto curTime(ctime(&time));
 
     set_timeout(5);
     //异步读取请求数据，直到空行
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
 
     boost::asio::async_read_until(*socket_, *read_buffer, "\r\n\r\n",
-                 boost::bind(&Connection::handle_read,
-                   shared_from_this(),read_buffer,
-                   boost::asio::placeholders::error,
-                   boost::asio::placeholders::bytes_transferred));
-//    read_buffer.reset(new boost::asio::streambuf());
+                                  boost::bind(&Connection::handle_read,
+                                              shared_from_this(),read_buffer,
+                                              boost::asio::placeholders::error,
+                                              boost::asio::placeholders::bytes_transferred));
+    //    read_buffer.reset(new boost::asio::streambuf());
 }
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer, const boost::system::error_code& error, std::size_t bytes_transferred)
@@ -43,7 +43,7 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         std::size_t total = read_buffer->size();//读到的总大小
         //        std::cout<<"total:"<<total<<std::endl;
         std::size_t bytes = total - bytes_transferred;//附加数据字节数
-//        std::cout<<"bytes:"<<bytes<<std::endl;
+        //        std::cout<<"bytes:"<<bytes<<std::endl;
 
         std::ostream os(read_buffer.get());
         os<<"\n";//在读缓冲区尾中加入换行符作结束标记,便于request解析
@@ -56,15 +56,18 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         if(_request->parse_request(is)==HttpRequest::BAD_REQUEST)//解析请求
             _request->errorRes();
 
-//        std::string str=_request->request_body();
-//        std::cout<<str<<std::endl;
+        //        std::string str=_request->request_body();
+        //        std::cout<<str<<std::endl;
 
-        //Log log;
         _response=std::make_shared<HttpResponse>("../WebServer/resource",_request->path(),_request->keepAlive());
-
-
         _response->buildResponse();
 
+        Log log;
+        time_t log_time;
+        time(&log_time);
+        log.init("jj",log_time,_request->method(),_request->uri(),_request->version(),_response->statusCode(),_request->body_size(),_request->userAgent());//初始化log
+        Logs *logs=Logs::get_instance();
+        logs->logQueue().push(log);//push到队列中
         //异步写响应数据
         boost::asio::async_write(*socket_,_response->buffer,
                                  boost::bind(&Connection::handle_write,
@@ -72,15 +75,17 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
                                              boost::asio::placeholders::error
                                              )
                                  );
+        logs->coutinfo();
+//        std::cout<<logs->size()<<std::endl;
     }
 }
 
 void Connection::handle_write(const boost::system::error_code& e)
 {
     if (!e)
-      {
+    {
         //to do process
-      }
+    }
 
 }
 

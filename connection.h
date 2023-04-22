@@ -9,6 +9,7 @@
 #include <boost/bind.hpp>
 #include"log.h"
 #include"log_queue.h"
+#include"logs.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 

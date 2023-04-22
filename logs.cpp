@@ -32,6 +32,6 @@ void* Logs::async_write_log()
 
 void Logs::init()
 {
-    std::shared_ptr<std::thread> log_thread(new std::thread(std::bind(&Logs::flush_log_thread,this)));
-    log_thread->join();
+    std::shared_ptr<std::thread> log_thread(new std::thread(std::bind(&Logs::flush_log_thread,this)));//创建日志线程
+    log_thread->detach();//线程分离
 }

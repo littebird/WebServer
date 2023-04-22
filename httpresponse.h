@@ -65,7 +65,10 @@ public:
     void addBody();
     void buildResponse();
     void readFile();
-
+    std::string statusCode()
+    {
+        return CODE_STATUS::get_string(m_status_code);
+    }
 //    std::string m_status_line;     //状态行
 //    std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
