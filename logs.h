@@ -16,23 +16,26 @@ public:
     static Logs *get_instance();//获取单实例对象
     static void *flush_log_thread(void *args);//日志线程起始函数
     void init();//初始化日志
-//    static void deleteInstance();
     Log_Queue& logQueue()
     {
         return m_log_queue;
     }
 
-    void coutinfo()
+//    void coutinfo()
+//    {
+//        std::unique_lock<std::mutex> lg(m_mutex);
+//        for(auto it:m_logs)
+//        {
+//            std::cout<<it<<std::endl;
+//        }
+//    }
+//    int size()
+//    {
+//        return m_logs.size();
+//    }
+    Log& getlog()
     {
-        std::unique_lock<std::mutex> lg(m_mutex);
-        for(auto it:m_logs)
-        {
-            std::cout<<it<<std::endl;
-        }
-    }
-    int size()
-    {
-        return m_logs.size();
+        return m_log;
     }
 private:
     Logs();

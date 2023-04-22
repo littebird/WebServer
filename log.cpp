@@ -22,6 +22,8 @@ void Log::init(std::string ip_addr,time_t log_time,std::string request_size,std:
 std::string Log::merge()
 {
     std::string merged;
-    merged=m_ip_addr+" - - ["+ctime(&m_log_time)+"]"+ " \" "+m_request_size+" "+m_file_addr+" "+m_version+"\" "+m_state+" "+std::to_string(m_context_length)+" - "+m_browser_info;
+    std::string log_time=ctime(&m_log_time);
+    log_time=log_time.substr(0,log_time.size()-1);
+    merged=m_ip_addr+" - - ["+log_time+"]"+ " \" "+m_request_size+" "+m_file_addr+" "+m_version+"\" "+m_state+" "+std::to_string(m_context_length)+" - "+m_browser_info;
     return merged;
 }

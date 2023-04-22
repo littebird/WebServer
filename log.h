@@ -1,7 +1,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include<vector>
 #include<string>
 #include<time.h>
 #include<mutex>

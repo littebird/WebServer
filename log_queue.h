@@ -16,10 +16,6 @@ public:
     int size();//返回队列长度
     void push(Log &item);//添加元素
     bool pop(Log &item);//取出队头元素
-    std::mutex& mutex()
-    {
-        return m_mutex;
-    }
 private:
     std::mutex m_mutex; // 互斥锁
     std::condition_variable m_cond;// 条件变量

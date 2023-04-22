@@ -33,6 +33,7 @@ private:
     std::unique_ptr<boost::asio::steady_timer> timer_;//定时器
     std::shared_ptr<std::mutex> mutex_;
 
+
     std::shared_ptr<HttpRequest> _request;
     std::shared_ptr<HttpResponse> _response;
 };

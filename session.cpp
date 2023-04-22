@@ -9,7 +9,6 @@ Session::Session(const std::string& address, const std::string& port)
     acceptor_(io_context_),
     signals_(io_context_),
     mutex_(new std::mutex()),
-//    new_connection_(new Connection(io_context_))
     connections_(new std::unordered_set<Connection *>())
 {
     signals_.add(SIGINT);
@@ -50,8 +49,6 @@ void Session::run()//线程池实现
 
 void Session::start_accept()
 {
-//    auto new_connection=create_connection(io_context_);//创建连接实例
-//    new_connection_.reset(new Connection(io_context_));
     auto new_connection=std::shared_ptr<Connection>(new Connection(io_context_));
     acceptor_.async_accept(new_connection->socket(),//异步等待连接
                            boost::bind(&Session::handle_accept, this,
