@@ -4,8 +4,9 @@
 #include <string.h>
 #include <thread>
 Connection::Connection(boost::asio::io_context& io_context)
-    : strand_(boost::asio::make_strand(io_context)),
-      socket_(new boost::asio::ip::tcp::socket(io_context))
+  : strand_(boost::asio::make_strand(io_context)),
+    socket_(new boost::asio::ip::tcp::socket(io_context)),
+    mutex_(new std::mutex())
 {
 
 }
@@ -72,6 +73,7 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         boost::asio::async_write(*socket_,_response->buffer,
                                  boost::bind(&Connection::handle_write,
                                              shared_from_this(),
+                                             _response,
                                              boost::asio::placeholders::error
                                              )
                                  );
@@ -80,10 +82,15 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
     }
 }
 
-void Connection::handle_write(const boost::system::error_code& e)
+void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost::system::error_code& e)
 {
     if (!e)
-    {
+      {
+        if(response->isKeepAlive()){//是否长连接
+//            std::cout<<"keep-alive"<<std::endl;
+            start();
+
+        }else close();
         //to do process
     }
 
@@ -107,13 +114,13 @@ void Connection::set_timeout(long seconds) {
     timer_->expires_from_now(std::chrono::seconds(seconds));
     auto self = this->shared_from_this();
     timer_->async_wait([self](const boost::system::error_code &ec) {
-        if(!ec)
+        if(!ec)//超时则断开连接
             self->close();
     });
 }
 
 void Connection::cancel_timeout() {
-    if(timer_) {
+    if(timer_) {//取消定时器计时
         boost::system::error_code ec;
         timer_->cancel(ec);
     }

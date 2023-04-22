@@ -7,8 +7,10 @@ using boost::system::error_code;
 Session::Session(const std::string& address, const std::string& port)
     :
     acceptor_(io_context_),
-    new_connection_(new Connection(io_context_)),
-    signals_(io_context_)
+    signals_(io_context_),
+    mutex_(new std::mutex()),
+//    new_connection_(new Connection(io_context_))
+    connections_(new std::unordered_set<Connection *>())
 {
     signals_.add(SIGINT);
      signals_.add(SIGTERM);
@@ -27,7 +29,7 @@ Session::Session(const std::string& address, const std::string& port)
     start_accept();
 }
 
-void Session::run()
+void Session::run()//线程池实现
 {
 
   std::vector<std::shared_ptr<std::thread> > threads;//线程池
@@ -48,18 +50,22 @@ void Session::run()
 
 void Session::start_accept()
 {
-    new_connection_.reset(new Connection(io_context_));//创建新套接字实例
-  acceptor_.async_accept(new_connection_->socket(),//异步等待连接
-      boost::bind(&Session::handle_accept, this,
-        boost::asio::placeholders::error));
+//    auto new_connection=create_connection(io_context_);//创建连接实例
+//    new_connection_.reset(new Connection(io_context_));
+    auto new_connection=std::shared_ptr<Connection>(new Connection(io_context_));
+    acceptor_.async_accept(new_connection->socket(),//异步等待连接
+                           boost::bind(&Session::handle_accept, this,
+                                       new_connection,
+                                       boost::asio::placeholders::error));
+
 }
 
-void Session::handle_accept(const boost::system::error_code& e)
+void Session::handle_accept(std::shared_ptr<Connection> new_connection,const boost::system::error_code& e)
 {
   if (!e)
   {
     //异步读取请求数据
-    new_connection_->start();
+    new_connection->start();
   }
   start_accept();
 }
@@ -68,5 +74,30 @@ void Session::handle_stop()
 {
       io_context_.stop();
 
+}
+
+std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& io_ctx)
+{
+
+    auto connections=this->connections_;
+    auto mutex_con=this->mutex_;
+    auto connection=std::shared_ptr<Connection>(new Connection(io_ctx),[connections,mutex_con](Connection* connection){//用lambda自定义智能指针释放资源方式
+
+        {//缩小锁的粒度
+            std::unique_lock<std::mutex> lock(*mutex_con);
+            auto it=connections->find(connection);
+            if(it!=connections->end()){
+            connections->erase(it);//从connections中删除
+            }
+        }
+
+        delete connection;
+    });
+
+    {
+        std::unique_lock<std::mutex> lock(*mutex_);
+        connections_->emplace(connection.get());
+    }
+    return connection;
 }
 
