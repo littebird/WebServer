@@ -5,7 +5,6 @@
 #include <vector>
 #include <unordered_set>
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 #include <thread>
 #include <boost/bind.hpp>
 #include "connection.h"

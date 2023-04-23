@@ -1,14 +1,13 @@
 #include "connection.h"
+
 #include <iostream>
-#include <unistd.h>
-#include <string.h>
 #include <thread>
 Connection::Connection(boost::asio::io_context& io_context)
   : strand_(boost::asio::make_strand(io_context)),
     socket_(new boost::asio::ip::tcp::socket(io_context)),
     mutex_(new std::mutex())
 {
-
+    count=0;
 }
 
 boost::asio::ip::tcp::socket& Connection::socket()
@@ -20,11 +19,10 @@ void Connection::start()
 {
 
 //    std::cout<<std::this_thread::get_id()<<std::endl;
+      count++;
+      std::cout<<count<<std::endl;
 
-//    auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());//获得当前时间并to time_t
-//    auto curTime(ctime(&time));
-
-    set_timeout(5);
+    set_timeout(5);//设置超时时间
 
     //异步读取请求数据，直到空行
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
