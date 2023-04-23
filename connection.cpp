@@ -12,7 +12,7 @@ Connection::Connection(boost::asio::io_context& io_context)
 
 boost::asio::ip::tcp::socket& Connection::socket()
 {
-  return *socket_;
+    return *socket_;
 }
 
 void Connection::start()
@@ -28,23 +28,21 @@ void Connection::start()
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
 
     boost::asio::async_read_until(*socket_, *read_buffer, "\r\n\r\n",
-                 boost::bind(&Connection::handle_read,
-                   shared_from_this(),read_buffer,
-                   boost::asio::placeholders::error,
-                   boost::asio::placeholders::bytes_transferred));
-
+                                  boost::bind(&Connection::handle_read,
+                                              shared_from_this(),read_buffer,
+                                              boost::asio::placeholders::error,
+                                              boost::asio::placeholders::bytes_transferred));
 }
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer, const boost::system::error_code& error, std::size_t bytes_transferred)
 {
     cancel_timeout();
     if (!error) {
-
         //read_buffer->size()不一定与传输的字节相等，有可能有附加的数据
         std::size_t total = read_buffer->size();//读到的总大小
         //        std::cout<<"total:"<<total<<std::endl;
         std::size_t bytes = total - bytes_transferred;//附加数据字节数
-//        std::cout<<"bytes:"<<bytes<<std::endl;
+        //        std::cout<<"bytes:"<<bytes<<std::endl;
 
         std::ostream os(read_buffer.get());
         os<<"\n";//在读缓冲区尾中加入换行符作结束标记,便于request解析
@@ -58,10 +56,13 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
             _request->errorRes();
 
         _response=std::make_shared<HttpResponse>("../WebServer/resource",_request->path(),_request->keepAlive());
-
-
         _response->buildResponse();
 
+        time_t log_time;
+        time(&log_time);
+        Logs *logs=Logs::get_instance();
+        logs->getlog().init(socket_->remote_endpoint().address().to_string(),log_time,_request->method(),_request->uri(),_request->version(),_response->statusCode(),_request->body_size(),_request->userAgent());//初始化log
+        logs->logQueue().push(logs->getlog());//push到队列中
         //异步写响应数据
         boost::asio::async_write(*socket_,_response->buffer,
                                  boost::bind(&Connection::handle_write,
@@ -70,24 +71,22 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
                                              boost::asio::placeholders::error
                                              )
                                  );
-
-
     }
-
 }
 
 void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost::system::error_code& e)
 {
     if (!e)
       {
+//         Logs *logs=Logs::get_instance();
+//         logs->coutinfo();
+//         std::cout<<std::endl;
         if(response->isKeepAlive()){//是否长连接
-//            std::cout<<"keep-alive"<<std::endl;
             start();
 
         }else close();
-
         //to do process
-      }
+    }
 
 }
 

@@ -56,6 +56,16 @@ public:
     }
     bool  isKeepAlive();
 
+    int body_size()
+    {
+        return m_request_body.size();
+    }
+    std::string userAgent()
+    {
+        std::string str="User-Agent";
+        auto it=header_kv.find(str);
+        return it->second;
+    }
     void init();
 
     HTTP_CODE parse_request(std::istream& is);      //主状态机,解析请求

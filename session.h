@@ -5,6 +5,10 @@
 #include <vector>
 #include <unordered_set>
 #include <boost/noncopyable.hpp>
+
+#include <boost/asio/basic_signal_set.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <thread>
 #include <boost/bind.hpp>
 #include "connection.h"
@@ -22,7 +26,7 @@ private:
     std::shared_ptr<Connection> create_connection(boost::asio::io_context& io_ctx);//创建连接，返回连接对象
     boost::asio::io_context io_context_;//io上下文
     boost::asio::ip::tcp::acceptor acceptor_;//用于指定端口接受连接
-
+    boost::asio::signal_set signals_;
     std::shared_ptr<std::unordered_set<Connection *>>connections_;//Connections
     std::shared_ptr<std::mutex> mutex_;//互斥锁
 };

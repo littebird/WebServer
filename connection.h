@@ -6,6 +6,9 @@
 #include <boost/noncopyable.hpp>
 #include <memory>
 #include <boost/bind.hpp>
+#include"log.h"
+#include"log_queue.h"
+#include"logs.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 
@@ -29,6 +32,7 @@ private:
     std::unique_ptr<boost::asio::ip::tcp::socket>socket_;//socket套接字
     std::unique_ptr<boost::asio::steady_timer> timer_;//定时器
     std::shared_ptr<std::mutex> mutex_;
+
 
     std::shared_ptr<HttpRequest> _request;
     std::shared_ptr<HttpResponse> _response;

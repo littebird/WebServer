@@ -1,5 +1,5 @@
-#include "session.h"
-
+ #include "session.h"
+#include <boost/asio/basic_signal_set.hpp>
 #include<iostream>
 
 using boost::asio::ip::tcp;
@@ -8,9 +8,16 @@ using boost::system::error_code;
 Session::Session(const std::string& address, const std::string& port)
     :
     acceptor_(io_context_),
+    signals_(io_context_),
     mutex_(new std::mutex()),
     connections_(new std::unordered_set<Connection *>())
 {
+    signals_.add(SIGINT);
+     signals_.add(SIGTERM);
+#if defined(SIGQUIT)
+      signals_.add(SIGQUIT);
+#endif // defined(SIGQUIT)
+    signals_.async_wait(boost::bind(&Session::handle_stop, this));
     boost::asio::ip::tcp::resolver resolver(io_context_);
      boost::asio::ip::tcp::endpoint endpoint =
        *resolver.resolve(address, port).begin();//ip和端口号
@@ -45,7 +52,11 @@ void Session::run()//线程池实现
 
 void Session::start_accept()
 {
+<<<<<<< HEAD
     auto new_connection=create_connection(io_context_);
+=======
+    auto new_connection=std::shared_ptr<Connection>(new Connection(io_context_));
+>>>>>>> 94507e75b237083dc715dbbb8bfeaa3d1932ff49
     acceptor_.async_accept(new_connection->socket(),//异步等待连接
                            boost::bind(&Session::handle_accept, this,
                                        new_connection,
@@ -60,7 +71,6 @@ void Session::handle_accept(std::shared_ptr<Connection> new_connection,const boo
     //异步读取请求数据
     new_connection->start();
   }
-
   start_accept();
 }
 
