@@ -52,11 +52,8 @@ void Session::run()//线程池实现
 
 void Session::start_accept()
 {
-<<<<<<< HEAD
+
     auto new_connection=create_connection(io_context_);
-=======
-    auto new_connection=std::shared_ptr<Connection>(new Connection(io_context_));
->>>>>>> 94507e75b237083dc715dbbb8bfeaa3d1932ff49
     acceptor_.async_accept(new_connection->socket(),//异步等待连接
                            boost::bind(&Session::handle_accept, this,
                                        new_connection,
