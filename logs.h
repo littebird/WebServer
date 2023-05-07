@@ -8,8 +8,12 @@
 #include<thread>
 #include<iostream>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include<fstream>
 #include"log.h"
+#include"access_log.h"
 #include"log_queue.h"
+#include"error_log.h"
 class Logs:private boost::noncopyable//日志容器类
 {
 public:
@@ -21,30 +25,24 @@ public:
         return m_log_queue;
     }
 
-//    void coutinfo()
-//    {
-//        std::unique_lock<std::mutex> lg(m_mutex);
-//        for(auto it:m_logs)
-//        {
-//            std::cout<<it<<std::endl;
-//        }
-//    }
-//    int size()
-//    {
-//        return m_logs.size();
-//    }
-    Log& getlog()
+    std::shared_ptr<Log> get_accesslog()
     {
-        return m_log;
+        return accesslog;
+    }
+    std::shared_ptr<Log> get_errorlog()
+    {
+        return errorlog;
     }
 private:
     Logs();
     ~Logs();
     void *async_write_log();//写入日志
 private:
+    std::ofstream m_file;//文件写操作
     std::vector<std::string> m_logs;//日志容器
     Log_Queue m_log_queue;//日志队列
-    Log m_log;//单个日志
+    std::shared_ptr<Log> accesslog;//Access_Log类智能指针
+    std::shared_ptr<Log> errorlog;//Error_log类智能指针
     std::mutex m_mutex;//互斥锁
 };
 
