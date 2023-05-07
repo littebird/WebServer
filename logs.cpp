@@ -2,12 +2,13 @@
 
 Logs::Logs()
 {
-
+    accesslog=std::make_shared<Access_Log>("accesslog");
+    errorlog=std::make_shared<Error_log>("errorlog");
 }
 
 Logs::~Logs()
 {
-
+      m_file.close();
 }
 Logs* Logs::get_instance()
 {
@@ -22,11 +23,23 @@ void* Logs::flush_log_thread(void *args)
 
 void* Logs::async_write_log()
 {
-    while(m_log_queue.pop(m_log))
+    while(m_log_queue.pop())//获取队列数据
     {
         std::unique_lock<std::mutex> lg(m_mutex);
-        std::string data=m_log.merge();
-        m_logs.push_back(data);
+        if(accesslog->getname()=="accesslog")
+        {
+            m_file.open("../WebServer/resource/accesslogfiles.txt",std::ios::out|std::ios::app);
+            std::string data=accesslog->merge();
+            m_file<<data<<"\n";
+            m_file.close();
+        }
+        else
+        {
+            m_file.open("../WebServer/resource/errorlogfiles.txt",std::ios::out|std::ios::app);
+            std::string data=errorlog->merge();
+            m_file<<data<<"\n";
+            m_file.close();
+        }
     }
 }
 

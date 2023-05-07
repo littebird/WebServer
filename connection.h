@@ -5,8 +5,9 @@
 #include <boost/asio.hpp>
 #include <boost/noncopyable.hpp>
 #include <memory>
+#include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
-#include"log.h"
+#include"access_log.h"
 #include"log_queue.h"
 #include"logs.h"
 #include "httprequest.h"

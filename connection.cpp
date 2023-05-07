@@ -57,8 +57,21 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         time_t log_time;
         time(&log_time);
         Logs *logs=Logs::get_instance();
-        logs->getlog().init(socket_->remote_endpoint().address().to_string(),log_time,_request->method(),_request->uri(),_request->version(),_response->statusCode(),_request->body_size(),_request->userAgent());//初始化log
-        logs->logQueue().push(logs->getlog());//push到队列中
+        if(_response->statusCode()=="Not Found")
+        {
+            std::cout<<111<<std::endl;
+            logs->get_errorlog()->init(log_time,
+                                       "error",socket_->remote_endpoint().address().to_string(),"404 Not Found");
+            logs->logQueue().push(*logs->get_errorlog());
+        }else{
+            logs->get_accesslog()->init(socket_->remote_endpoint().address().to_string(),
+                                                            log_time,_request->method(),
+                                                    _request->uri(),_request->version(),
+                                          _response->statusCode(),_request->body_size(),
+                                                                _request->userAgent());//初始化log
+            logs->logQueue().push(*logs->get_accesslog());//push到队列中
+        }
+
         //异步写响应数据
         boost::asio::async_write(*socket_,_response->buffer,
                                  boost::bind(&Connection::handle_write,
@@ -74,9 +87,9 @@ void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost
 {
     if (!e)
       {
-//         Logs *logs=Logs::get_instance();
-//         logs->coutinfo();
-//         std::cout<<std::endl;
+//        Logs *logs=Logs::get_instance();
+//        logs->coutinfo();
+//        std::cout<<std::endl;
         if(response->isKeepAlive()){//是否长连接
             start();
 
