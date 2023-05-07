@@ -5,8 +5,6 @@
 #include<boost/asio/streambuf.hpp>
 #include<fstream>
 #include<unordered_map>
-#include<chrono>
-
 
 // HTTP Status codes
 namespace CODE_STATUS {
@@ -76,7 +74,7 @@ public:
 //    std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
 
-    std::chrono::system_clock::time_point _curTime;    //当前响应时间
+    std::string _curTime;    //当前响应时间
     std::string m_path;   //路径
     std::string doc_root;     //资源目录
 

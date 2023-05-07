@@ -1,4 +1,5 @@
 #include "connection.h"
+
 #include <iostream>
 #include <thread>
 Connection::Connection(boost::asio::io_context& io_context)
@@ -6,7 +7,7 @@ Connection::Connection(boost::asio::io_context& io_context)
     socket_(new boost::asio::ip::tcp::socket(io_context)),
     mutex_(new std::mutex())
 {
-
+    count=0;
 }
 
 boost::asio::ip::tcp::socket& Connection::socket()
@@ -17,9 +18,12 @@ boost::asio::ip::tcp::socket& Connection::socket()
 void Connection::start()
 {
 
-    //    std::cout<<std::this_thread::get_id()<<std::endl;
+//    std::cout<<std::this_thread::get_id()<<std::endl;
+      count++;
+      std::cout<<count<<std::endl;
 
-    set_timeout(5);
+    set_timeout(5);//设置超时时间
+
     //异步读取请求数据，直到空行
     auto read_buffer=std::make_shared<boost::asio::streambuf>();
 

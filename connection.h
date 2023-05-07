@@ -37,6 +37,8 @@ private:
 
     std::shared_ptr<HttpRequest> _request;
     std::shared_ptr<HttpResponse> _response;
+
+    std::atomic<int> count;
 };
 
 #endif // CONNECTION_H

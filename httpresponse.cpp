@@ -7,6 +7,10 @@ HttpResponse::HttpResponse(const std::string& root,const std::string& path,bool 
 {
     m_status_code=CODE_STATUS::value::uninitialized;
 
+    auto time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());//获得当前时间并to time_t
+    std::string curTime=ctime(&time);
+    _curTime=curTime.substr(0,curTime.size()-1);//去除末尾换行符
+
 }
 
 HttpResponse::HttpResponse():os(&buffer)
@@ -26,7 +30,7 @@ void HttpResponse::addHeader()
 {
     os<<"Server: webserver"<<CRLF;
 
-    os<<"Date: "<<CRLF;
+    os<<"Date: "<<_curTime<<CRLF;
     if(keepAlive)
         os<<"Connection: keep-alive"<<CRLF;
     else os<<"Connection: close"<<CRLF;
