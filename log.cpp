@@ -4,7 +4,7 @@ Log::Log()
 {
 
 }
-void Log::init(std::string ip_addr,time_t log_time,std::string request_size,std::string file_addr,std::string version,std::string state,int context_length,std::string browser_info)
+void Log::init(std::string ip_addr,std::string log_time,std::string request_size,std::string file_addr,std::string version,std::string state,int context_length,std::string browser_info)
 {
     m_ip_addr=ip_addr;
     m_log_time=log_time;
@@ -18,12 +18,12 @@ void Log::init(std::string ip_addr,time_t log_time,std::string request_size,std:
 std::string Log::merge()
 {
     std::string merged;
-    std::string log_time=ctime(&m_log_time);
-    log_time=log_time.substr(0,log_time.size()-1);
-    merged=m_ip_addr+" - - ["+log_time+"]"+ " \" "+m_request_size+" "+m_file_addr+" "+m_version+"\" "+m_state+" "+std::to_string(m_context_length)+" - "+m_browser_info;
+//    std::string log_time=ctime(&m_log_time);
+//    log_time=log_time.substr(0,log_time.size()-1);
+    merged=m_ip_addr+" - - ["+m_log_time+"]"+ " \" "+m_request_size+" "+m_file_addr+" "+m_version+"\" "+m_state+" "+std::to_string(m_context_length)+" - "+m_browser_info;
     return merged;
 }
-void Log::init(time_t log_time,std::string log_level,std::string ip_addr,std::string error_info)
+void Log::init(std::string log_time,std::string log_level,std::string ip_addr,std::string error_info)
 {
     m_log_time=log_time;
     m_log_level=log_level;

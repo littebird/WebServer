@@ -8,7 +8,7 @@ Error_log::~Error_log()
 {
 }
 
-void Error_log::init(time_t log_time,std::string log_level,std::string ip_addr,std::string error_info)
+void Error_log::init(std::string log_time,std::string log_level,std::string ip_addr,std::string error_info)
 {
     m_log_time=log_time;
     m_log_level=log_level;
@@ -18,8 +18,8 @@ void Error_log::init(time_t log_time,std::string log_level,std::string ip_addr,s
 std::string Error_log::merge()
 {
     std::string merged;
-    std::string log_time=ctime(&m_log_time);
-    log_time=log_time.substr(0,log_time.size()-1);
-    merged="["+log_time+"] ["+m_log_level+"] [client"+m_ip_addr+"] error_infomations:"+m_error_info;
+//    std::string log_time=ctime(&m_log_time);
+//    log_time=log_time.substr(0,log_time.size()-1);
+    merged="["+m_log_time+"] ["+m_log_level+"] [client"+m_ip_addr+"] error_infomations:"+m_error_info;
     return merged;
 }

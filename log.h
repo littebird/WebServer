@@ -8,8 +8,8 @@ class Log
 {
 public:
     Log();
-    virtual void init(std::string ip_addr,time_t log_time,std::string request_size,std::string file_addr,std::string version,std::string state,int context_length,std::string browser_info);
-    virtual void init(time_t log_time,std::string log_level,std::string ip_addr,std::string error_info);
+    virtual void init(std::string ip_addr,std::string log_time,std::string request_size,std::string file_addr,std::string version,std::string state,int context_length,std::string browser_info);
+    virtual void init(std::string log_time,std::string log_level,std::string ip_addr,std::string error_info);
     virtual std::string merge();
     std::string getname()
     {
@@ -18,7 +18,7 @@ public:
 public:
     std::string m_name;//标识
 private:
-    time_t m_log_time; //日志时间
+    std::string m_log_time; //日志时间
     std::string m_request_size; //请求方法
     std::string m_file_addr; //资源url
     std::string m_ip_addr; //ip地址
