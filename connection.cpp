@@ -19,8 +19,8 @@ void Connection::start()
 {
 
 //    std::cout<<std::this_thread::get_id()<<std::endl;
-      count++;
-      std::cout<<count<<std::endl;
+    count++;
+    std::cout<<count<<std::endl;
 
     set_timeout(5);//设置超时时间
 
@@ -63,6 +63,7 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         Logs *logs=Logs::get_instance();
         logs->getlog().init(socket_->remote_endpoint().address().to_string(),log_time,_request->method(),_request->uri(),_request->version(),_response->statusCode(),_request->body_size(),_request->userAgent());//初始化log
         logs->logQueue().push(logs->getlog());//push到队列中
+
         //异步写响应数据
         boost::asio::async_write(*socket_,_response->buffer,
                                  boost::bind(&Connection::handle_write,
@@ -81,6 +82,7 @@ void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost
 //         Logs *logs=Logs::get_instance();
 //         logs->coutinfo();
 //         std::cout<<std::endl;
+
         if(response->isKeepAlive()){//是否长连接
             start();
 

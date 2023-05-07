@@ -13,11 +13,12 @@ Session::Session(const std::string& address, const std::string& port)
     connections_(new std::unordered_set<Connection *>())
 {
     signals_.add(SIGINT);
-     signals_.add(SIGTERM);
+    signals_.add(SIGTERM);
 #if defined(SIGQUIT)
-      signals_.add(SIGQUIT);
+    signals_.add(SIGQUIT);
 #endif // defined(SIGQUIT)
     signals_.async_wait(boost::bind(&Session::handle_stop, this));
+
     boost::asio::ip::tcp::resolver resolver(io_context_);
      boost::asio::ip::tcp::endpoint endpoint =
        *resolver.resolve(address, port).begin();//ip和端口号

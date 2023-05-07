@@ -70,6 +70,9 @@ public:
     bool isKeepAlive()const{
         return keepAlive;
     }
+    std::string curTime()const{
+        return _curTime;
+    }
 //    std::string m_status_line;     //状态行
 //    std::vector<std::string> m_response_header; //响应头
     std::string m_response_body;               //响应体
