@@ -13,11 +13,12 @@ Session::Session(const std::string& address, const std::string& port)
     connections_(new std::unordered_set<Connection *>())
 {
     signals_.add(SIGINT);
-     signals_.add(SIGTERM);
+    signals_.add(SIGTERM);
 #if defined(SIGQUIT)
-      signals_.add(SIGQUIT);
+    signals_.add(SIGQUIT);
 #endif // defined(SIGQUIT)
     signals_.async_wait(boost::bind(&Session::handle_stop, this));
+
     boost::asio::ip::tcp::resolver resolver(io_context_);
      boost::asio::ip::tcp::endpoint endpoint =
        *resolver.resolve(address, port).begin();//ip和端口号
@@ -33,14 +34,15 @@ void Session::run()//线程池实现
 {
 
   std::vector<std::shared_ptr<std::thread> > threads;//线程池
-  for (std::size_t i = 0; i <4 ; ++i)
+  unsigned const thread_count=std::thread::hardware_concurrency();//硬件所支持的并发线程数目
+  for (unsigned i = 0; i <thread_count ; ++i)
   {
       //创建多个线程共享一个io_context,并在每个线程执行io_context.run()，执行io事件队列处理
       std::shared_ptr<std::thread> thread(new std::thread(
                                               boost::bind(&boost::asio::io_context::run, &io_context_)));
 
       threads.push_back(thread);
-      //    std::cout<<thread->get_id()<<std::endl;
+//          std::cout<<thread->get_id()<<std::endl;
   }
 
   //等待创建线程结束

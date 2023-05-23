@@ -7,11 +7,11 @@
 #include <memory>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
-#include"access_log.h"
-#include"log_queue.h"
-#include"logs.h"
-#include "httprequest.h"
-#include "httpresponse.h"
+#include "log/access_log.h"
+#include "log/log_queue.h"
+#include "log/logs.h"
+#include "http/httprequest.h"
+#include "http/httpresponse.h"
 
 //此类用于建立连接并获得socket,在进行读写操作
 class Connection :public std::enable_shared_from_this<Connection>,
@@ -38,7 +38,7 @@ private:
     std::shared_ptr<HttpRequest> _request;
     std::shared_ptr<HttpResponse> _response;
 
-    std::atomic<int> count;
+//    std::atomic<int> count;
 };
 
 #endif // CONNECTION_H

@@ -14,15 +14,22 @@ project( WebServer
 add_executable( WebServer )
 
 target_sources( WebServer PRIVATE 
-                main.cpp httprequest.cpp httprequest.h
-                httpresponse.cpp httpresponse.h
-                connection.h connection.cpp
+                main.cpp connection.h connection.cpp
                 session.h session.cpp
-                access_log.h access_log.cpp
-                logs.h logs.cpp
-                log_queue.h log_queue.cpp
-                error_log.h error_log.cpp
-                log.h log.cpp)
+                http/httpresponse.h
+                http/httpresponse.cpp
+                http/httprequest.h
+                http/httprequest.cpp
+                log/access_log.h
+                log/access_log.cpp
+                log/logs.h
+                log/logs.cpp
+                log/log_queue.h
+                log/log_queue.cpp
+                log/error_log.h
+                log/error_log.cpp
+                log/log.h
+                log/log.cpp)
 
 
                 

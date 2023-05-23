@@ -25,12 +25,6 @@ public:
         return m_log_queue;
     }
 
-//    void coutinfo()
-//    {
-//        std::unique_lock<std::mutex> lg(m_mutex);
-//        auto it=m_logs.back();
-//        std::cout<<it<<std::endl;
-//    }
     std::shared_ptr<Log> get_accesslog()
     {
         return accesslog;

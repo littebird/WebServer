@@ -7,7 +7,7 @@ Connection::Connection(boost::asio::io_context& io_context)
     socket_(new boost::asio::ip::tcp::socket(io_context)),
     mutex_(new std::mutex())
 {
-    count=0;
+//    count=0;
 }
 
 boost::asio::ip::tcp::socket& Connection::socket()
@@ -19,8 +19,8 @@ void Connection::start()
 {
 
 //    std::cout<<std::this_thread::get_id()<<std::endl;
-      count++;
-      std::cout<<count<<std::endl;
+//    count++;
+//    std::cout<<count<<std::endl;
 
     set_timeout(5);//设置超时时间
 
@@ -59,9 +59,10 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         _response->buildResponse();
 
         Logs *logs=Logs::get_instance();
+
         if(_response->statusCode()=="Not Found")
         {
-            std::cout<<111<<std::endl;
+
             logs->get_errorlog()->init(_response->_curTime,
                                        "error",socket_->remote_endpoint().address().to_string(),"404 Not Found");
             logs->logQueue().push(*logs->get_errorlog());
@@ -89,9 +90,6 @@ void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost
 {
     if (!e)
       {
-//        Logs *logs=Logs::get_instance();
-//        logs->coutinfo();
-//        std::cout<<std::endl;
         if(response->isKeepAlive()){//是否长连接
             start();
 

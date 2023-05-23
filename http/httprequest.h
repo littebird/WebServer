@@ -15,7 +15,7 @@ public:
     HttpRequest();
 
 
-    //解析请求时，主状态机的状态
+    //解析请求时，状态机的状态
     enum PARSE_STATE {
             REQUEST_LINE,
             HEADERS,
@@ -68,7 +68,7 @@ public:
     }
     void init();
 
-    HTTP_CODE parse_request(std::istream& is);      //主状态机,解析请求
+    HTTP_CODE parse_request(std::istream& is);      //状态机,解析请求
     bool parse_request_line(const std::string& text); //解析请求首行
     void parse_header(const std::string& text);       //解析请求头
     void parse_body(const std::string& text);         //解析请求体

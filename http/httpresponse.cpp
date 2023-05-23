@@ -54,11 +54,12 @@ void HttpResponse::addBody()
 void HttpResponse::readFile()
 {
     std::string full_path=doc_root+m_path;
-    std::fstream ifs(full_path.c_str(),std::ios::in | std::ios::binary);//文件流
+    std::fstream ifs(full_path.c_str(),std::ios::in | std::ios::binary);//以读，二进制方式打开文件
     if(!ifs){
         //error not found
         m_path="/404.html";
         m_status_code=CODE_STATUS::value::not_found;
+
         readFile();
     }
     char buf[512];
@@ -94,9 +95,13 @@ std::string HttpResponse::get_type(const std::string& path)
         { ".gif",   "image/gif" },
         { ".jpg",   "image/jpeg" },
         { ".jpeg",  "image/jpeg" },
+        { ".wav",   "audio/wave"},
+        { ".ogg",   "video/ogg"},
+        { ".webm",  "video/webm"},
+        { ".mp4",   "video/mpeg4"},
         { ".css",   "text/css "},
         { ".js",    "text/javascript "},
-        { ".json",  "application/json; charset=utf-8"},
+        { ".json",  "application/json; charset=     utf-8"},
         { ".plain", "text/plain; charset=utf-8"}
     };
     auto findpos=path.find_last_of('.');//找到文件路径的后缀位置
