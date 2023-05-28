@@ -16,6 +16,10 @@ add_executable( WebServer )
 target_sources( WebServer PRIVATE 
                 main.cpp connection.h connection.cpp
                 session.h session.cpp
+                http2_stream.h http2_stream.cpp
+                headerframe.h headerframe.cpp
+                dataframe.h dataframe.cpp
+                frame.h frame.cpp
                 http/httpresponse.h
                 http/httpresponse.cpp
                 http/httprequest.h
