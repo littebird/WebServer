@@ -19,6 +19,10 @@ target_sources( WebServer PRIVATE
                 hpack.cpp hpack.h
                 encoder.cpp encoder.h
                 decoder.cpp decoder.h
+                http2_stream.h http2_stream.cpp
+                headerframe.h headerframe.cpp
+                dataframe.h dataframe.cpp
+                frame.h frame.cpp
                 http/httpresponse.h
                 http/httpresponse.cpp
                 http/httprequest.h

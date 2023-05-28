@@ -26,12 +26,13 @@ void* Logs::async_write_log()
     while(m_log_queue.pop())//获取队列数据
     {
         std::unique_lock<std::mutex> lg(m_mutex);
-        if(accesslog->getname()=="accesslog")
+        if(accesslog->getname()=="accesslog")//判断是否为access日志
         {
+            //ios::out(为输出写而打开文件) ios::app(所有输出附加在文件末尾)
             m_file.open("../WebServer/resource/accesslogfiles.txt",std::ios::out|std::ios::app);
             std::string data=accesslog->merge();
-            m_file<<data<<"\n";
-            m_file.close();
+            m_file<<data<<"\n";//数据写入文件
+            m_file.close();//关闭文件
         }
         else
         {

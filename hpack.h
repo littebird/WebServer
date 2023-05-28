@@ -7,6 +7,7 @@
 #include <vector>
 
 namespace Hpack {
+    //huffman码
     typedef struct {
         uint32_t nbits;//code的bit数
         uint32_t code;//huffman code
@@ -32,15 +33,68 @@ namespace Hpack {
         uint32_t cur_header_entry_size;
 
     public:
-        DynamicTable(const uint32_t& tableSize,const uint32_t& maxSize,std::deque<std::pair<std::string, std::string> > &&entrys )noexcept;
+        DynamicTable(const uint32_t& tableSize,const uint32_t& maxSize,std::deque<std::pair<std::string, std::string> > &&entrys )noexcept:
+            entrys{std::move(entrys)},header_table_size{tableSize},max_header_entry_size{maxSize},cur_header_entry_size{0}
+        {
+            for(auto const &pair:this->entrys){
+                this->cur_header_entry_size+=pair.first.length()+pair.second.length();
+            }
+        }
 
         std::size_t size() const noexcept{
             return entrys.size();
         };
-        void addHeader(const std::pair<std::string, std::string> &header);//添加头部字段
-        void addHeader(std::pair<std::string, std::string> &&header);
-        void setTableSize(const uint32_t tableSize);
-        void setMaxSize(const uint32_t maxSize);
+        void addHeader(const std::pair<std::string, std::string> &header)//添加头部字段
+        {
+            this->cur_header_entry_size+=header.first.length()+header.second.length();
+            this->entrys.emplace_front(header);//添加至动态表表头
+
+            while(this->entrys.size()>this->header_table_size||(this->max_header_entry_size!=0&&this->cur_header_entry_size>this->max_header_entry_size)){
+                //当前动态表大小超过maxSize
+
+                auto const& pair=entrys.back();
+
+                cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
+
+                entrys.pop_back();//移除动态表最后一项
+            }
+        }
+        void addHeader(std::pair<std::string, std::string> &&header){
+            this->cur_header_entry_size+=header.first.length()+header.second.length();
+            this->entrys.emplace_front(std::move(header));//添加至动态表表头
+
+            while(this->entrys.size()>this->header_table_size||(this->max_header_entry_size!=0&&this->cur_header_entry_size>this->max_header_entry_size)){
+                //当前动态表大小超过maxSize
+
+                auto const& pair=entrys.back();
+
+                cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
+
+                entrys.pop_back();//移除动态表最后一项
+            }
+        }
+        void setTableSize(const uint32_t tableSize){
+            this->header_table_size=tableSize;
+
+            while(this->entrys.size()>this->header_table_size){
+                auto const& pair=entrys.back();
+
+                cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
+
+                entrys.pop_back();//移除动态表最后一项
+            }
+        }
+        void setMaxSize(const uint32_t maxSize){
+            this->max_header_entry_size=maxSize;
+
+            while(this->max_header_entry_size!=0&&this->cur_header_entry_size>this->max_header_entry_size){
+                auto const& pair=entrys.back();
+
+                cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
+
+                entrys.pop_back();//移除动态表最后一项
+            }
+        }
 
         const std::pair<std::string, std::string>& operator[](const std::size_t index)const noexcept{
             return this->entrys[index];
