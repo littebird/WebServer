@@ -349,6 +349,7 @@ namespace Hpack {
                 x=c&0xf;
             }
         }
+
         return accept;
 
     }
