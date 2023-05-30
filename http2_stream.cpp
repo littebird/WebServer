@@ -10,21 +10,21 @@ void Http2_Stream::stream_init(uint32_t stream_id,http2_stream_state state)
     m_stream_id=stream_id;
     m_state=state;
 }
-int Http2_Stream::stream_attach_item()
+void Http2_Stream::set_weight(uint32_t weight)
 {
-    return 0;
+    m_weight=weight;
 }
-int Http2_Stream::stream_detach_item()
+uint32_t Http2_Stream::get_stream_id()
 {
-    return 0;
+    return m_stream_id;
 }
-bool Http2_Stream::set_send_stream_state(std::shared_ptr<std::string> item)
+bool Http2_Stream::set_send_stream_state(std::shared_ptr<Frame> &item)
 {
     switch(m_state)
     {
         case http2_stream_state::STREAM_IDLE:
         {
-            if(1)//如果帧为hearder帧
+            if(item->get_frame_type()==0x01)//如果帧为hearder帧
             {
                 m_state=STREAM_OPEN;
             }
@@ -35,13 +35,13 @@ bool Http2_Stream::set_send_stream_state(std::shared_ptr<std::string> item)
         }
         case http2_stream_state::STREAM_LOCAL_RESERVED:
         {
-            if(1)//为hearder帧
+            if(item->get_frame_type()==0x01)//为hearder帧
             {
                 m_state=STREAM_REMOTE_HALF_CLOSED;
             }
-            else if(1)//为rst_stream帧
+            else if(item->get_frame_type()==0x03)//为rst_stream帧
             {
-                m_state=STREAM_CLOSED;
+                m_state=STREAM_CLOSE;
             }
             else
             {
@@ -50,9 +50,9 @@ bool Http2_Stream::set_send_stream_state(std::shared_ptr<std::string> item)
         }
         case http2_stream_state::STREAM_REMOTE_RESERVED:
         {
-            if(1)//rst_stream帧
+            if(item->get_frame_type()==0x03)//rst_stream帧
             {
-                m_state=STREAM_CLOSED;
+                m_state=STREAM_CLOSE;
             }
             else
             {
@@ -61,26 +61,35 @@ bool Http2_Stream::set_send_stream_state(std::shared_ptr<std::string> item)
         }
         case http2_stream_state::STREAM_OPEN:
         {
-            if(1)//如果该帧的标识为end_stream
+            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_LOCAL_HALF_CLOSED;
             }
-            else if(1)//如果为rst_stream帧
+            else if(item->get_frame_type()==0x03)//如果为rst_stream帧
             {
-                m_state=STREAM_CLOSED;
+                m_state=STREAM_CLOSE;
+            }
+            else
+                   return false;
+        }
+        case http2_stream_state::STREAM_REMOTE_HALF_CLOSED:
+        {
+            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
+            {
+                m_state=STREAM_CLOSE;
             }
         }
 
     }
     return true;
 }
-bool Http2_Stream::set_recieve_stream_state(std::shared_ptr<std::string> item)
+bool Http2_Stream::set_recieve_stream_state(std::shared_ptr<Frame> &item)
 {
     switch(m_state)
     {
         case http2_stream_state::STREAM_IDLE:
         {
-            if(1)//如果帧为hearder帧
+            if(item->get_frame_type()==0x01)//如果帧为hearder帧
             {
              m_state=STREAM_OPEN;
             }
@@ -91,13 +100,13 @@ bool Http2_Stream::set_recieve_stream_state(std::shared_ptr<std::string> item)
         }
         case http2_stream_state::STREAM_REMOTE_RESERVED:
         {
-            if(1)//为hearder帧
+            if(item->get_frame_type()==0x01)//为hearder帧
             {
                 m_state=STREAM_LOCAL_HALF_CLOSED;
             }
-            else if(1)//为rst_stream帧
+            else if(item->get_frame_type()==0x03)//为rst_stream帧
             {
-                m_state=STREAM_CLOSED;
+                m_state=STREAM_CLOSE;
             }
             else
             {
@@ -106,24 +115,20 @@ bool Http2_Stream::set_recieve_stream_state(std::shared_ptr<std::string> item)
         }
         case http2_stream_state::STREAM_OPEN:
         {
-            if(1)//如果该帧的标识为end_stream
+            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_REMOTE_RESERVED;
             }
         }
         case http2_stream_state::STREAM_LOCAL_HALF_CLOSED:
         {
-            if(1)//如果该帧的标识为end_stream
+            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
             {
-                m_state=STREAM_CLOSED;
-            }
-            else if(1)//如果为rst_stream帧
-            {
-             m_state=STREAM_CLOSED;
+                m_state=STREAM_CLOSE;
             }
         }
     }
-
+    return true;
 }
 
 
