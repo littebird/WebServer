@@ -23,6 +23,13 @@ target_sources( WebServer PRIVATE
                 headerframe.h headerframe.cpp
                 dataframe.h dataframe.cpp
                 frame.h frame.cpp
+                continuationframe.h continuationframe.cpp
+                priorityframe.h priorityframe.cpp
+                rst_streamframe.h rst_streamframe.cpp
+                settingsframe.h settingsframe.cpp
+                push_promiseframe.h push_promiseframe.cpp
+                pingframe.h pingframe.cpp
+                goawayframe.h goawayframe.cpp
                 http/httpresponse.h
                 http/httpresponse.cpp
                 http/httprequest.h
