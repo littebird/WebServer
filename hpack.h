@@ -17,11 +17,11 @@ namespace Hpack {
         uint8_t state;//当前huffman解码状态，实际是内部哈夫曼树的节点ID
         uint8_t flags;
         uint8_t sym;//符号
-    }huff_code ;
+    }huff_decode_node ;//huffman解码节点
     typedef enum{
         ACCEPTED=0x1,
         SYMBOL=0x2
-    }huff_decode_flag ;
+    }huff_decode_flag ;//解码标记
 
     class DynamicTable//动态表
     {
@@ -33,6 +33,10 @@ namespace Hpack {
         uint32_t cur_header_entry_size;
 
     public:
+        DynamicTable():header_table_size(0),max_header_entry_size(256),cur_header_entry_size(0){
+
+        }
+
         DynamicTable(const uint32_t& tableSize,const uint32_t& maxSize,std::deque<std::pair<std::string, std::string> > &&entrys )noexcept:
             entrys{std::move(entrys)},header_table_size{tableSize},max_header_entry_size{maxSize},cur_header_entry_size{0}
         {
@@ -46,30 +50,37 @@ namespace Hpack {
         };
         void addHeader(const std::pair<std::string, std::string> &header)//添加头部字段
         {
-            this->cur_header_entry_size+=header.first.length()+header.second.length();
-            this->entrys.emplace_front(header);//添加至动态表表头
+            header_table_size++;
+            cur_header_entry_size+=header.first.length()+header.second.length();
+            entrys.emplace_front(header);//添加至动态表表头
 
-            while(this->entrys.size()>this->header_table_size||(this->max_header_entry_size!=0&&this->cur_header_entry_size>this->max_header_entry_size)){
+            while(entrys.size()>header_table_size||
+                  (max_header_entry_size!=0&&
+                   cur_header_entry_size>max_header_entry_size)){
                 //当前动态表大小超过maxSize
 
                 auto const& pair=entrys.back();
 
                 cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
-
                 entrys.pop_back();//移除动态表最后一项
+                header_table_size--;
+
             }
+
         }
         void addHeader(std::pair<std::string, std::string> &&header){
             this->cur_header_entry_size+=header.first.length()+header.second.length();
             this->entrys.emplace_front(std::move(header));//添加至动态表表头
 
-            while(this->entrys.size()>this->header_table_size||(this->max_header_entry_size!=0&&this->cur_header_entry_size>this->max_header_entry_size)){
+
+            while(entrys.size()>header_table_size||
+                  (max_header_entry_size!=0&&
+                   cur_header_entry_size>max_header_entry_size)){
                 //当前动态表大小超过maxSize
 
                 auto const& pair=entrys.back();
 
                 cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
-
                 entrys.pop_back();//移除动态表最后一项
             }
         }
