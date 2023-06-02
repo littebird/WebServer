@@ -6,6 +6,7 @@
 #include <tuple>
 #include <numeric>
 
+
 enum decodeOpcode{//解码是否存在索引
     NONE,
     INDEXED,//有索引
@@ -32,7 +33,7 @@ class Decoder
 public:
     Decoder();
 
-    bool decode(const uint8_t *src,const std::size_t srclen,Hpack::DynamicTable& dynamicTable );
+    bool decode(const uint8_t *src,const std::size_t srclen,Hpack::DynamicTable& dynamicTable );//
 
     void init(){
         _buf.clear();

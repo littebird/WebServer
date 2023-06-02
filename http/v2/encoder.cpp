@@ -13,12 +13,13 @@ void Encoder::encode(std::vector<char> &dest, const std::vector<std::pair<std::s
 
         std::tie(index,is_full_match)=findHeaderInTable(header,dynamicTable);
 
+
         if(is_full_match){
             packIndex(dest,index);
-            return;
+            continue;
         }
 
-        const bool indexing=true;
+        const bool indexing=true;//目前默认带索引
 
         if(indexing){
             dynamicTable.addHeader(header);
@@ -35,6 +36,7 @@ void Encoder::encode(std::vector<char> &dest, const std::vector<std::pair<std::s
 void Encoder::packInteger(std::vector<char> &dest, uint64_t num, const uint8_t prefix)
 {//整数编码
     const uint64_t k = (1 << prefix) - 1;
+
 
     if(num<k){
         dest.emplace_back(num);
@@ -61,8 +63,11 @@ void Encoder::packInteger(std::vector<char> &dest, uint64_t num, const uint8_t p
 void Encoder::packIndex(std::vector<char> &dest, const std::size_t index)
 {
     const std::size_t head=dest.size();
+
     packInteger(dest,index,7);
+
     dest[head]|=0x80;
+
 }
 
 std::tuple<std::size_t, bool> Encoder::findHeaderInTable(const std::pair<std::string, std::string> &header, const Hpack::DynamicTable &dynamicTable)
@@ -85,6 +90,7 @@ std::tuple<std::size_t, bool> Encoder::findHeaderInTable(const std::pair<std::st
             break;
         }
     }
+
     for(std::size_t i=0;i<dynamicTable.size();++i){
         auto const& pair=dynamicTable[i];
 

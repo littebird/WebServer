@@ -16,9 +16,13 @@ add_executable( WebServer )
 target_sources( WebServer PRIVATE 
                 main.cpp connection.h connection.cpp
                 session.h session.cpp
-                hpack.cpp hpack.h
-                encoder.cpp encoder.h
-                decoder.cpp decoder.h
+                http/v2/hpack.cpp
+                http/v2/hpack.h
+                http/v2/encoder.cpp
+                http/v2/encoder.h
+                http/v2/decoder.cpp
+                http/v2/decoder.h
+                http2server.cpp http2server.h
                 http2_stream.h http2_stream.cpp
                 headerframe.h headerframe.cpp
                 dataframe.h dataframe.cpp

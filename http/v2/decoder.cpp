@@ -9,11 +9,15 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
 {
     std::size_t cur=0;
 
+//    std::cout<<srclen<<"\n";
+
     while(cur<srclen){
+
         //解码状态机
         switch (state) {
         case decodeState::OPCODE:{
             const uint8_t c=src[cur];
+
 
             if((c&0xe0)==0x20){
                 opcode=decodeOpcode::INDEXED;
@@ -22,6 +26,7 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
             }else if(c&0x80){
                 opcode=decodeOpcode::INDEXED;
                 state=decodeState::READ_INDEX;
+
             }else{
                 if (0 == c || 0x40 == c || 0x10 == c) {
                     opcode = decodeOpcode::NOT_INDEXED;
@@ -71,18 +76,21 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
                 prefixLen=4;
             }
 
+
             uint64_t nread;
             bool success;
 
-            std::tie(left,nread,shift,success)=unpackInteger(src+cur,srclen-cur,left,shift,5);
+            std::tie(left,nread,shift,success)=unpackInteger(src+cur,srclen-cur,left,shift,prefixLen);
+
+            cur += nread;
 
             if(!success||left==0||left>getMaxTableIndex(dynamicTable)){
                 return false;
             }
 
             if(opcode==decodeOpcode::INDEXED){
-                //添加至headers
-                //*unpackIndexed(left,dynamicTable)
+                //解码后的请求数据添加添加至headers
+                unpackIndexed(left,dynamicTable);
 
                 state=decodeState::OPCODE;
             }else{
@@ -108,6 +116,7 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
             cur+=nread;
 
             if(!success){
+
                 return false;
             }
 
@@ -170,7 +179,7 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
 
             if(left==0){
                 //添加至headers
-                //opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue
+                opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
 
                 state=decodeState::OPCODE;
 
@@ -194,8 +203,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
                 return false;
             }
 
-            //添加至headers
-            //opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue
+            //解码后的请求数据添加至headers
+            opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
 
             state=decodeState::OPCODE;
 
@@ -211,8 +220,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
                 return false;
             }
 
-            //添加至headers
-            //opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue
+            //解码后的请求数据添加添加至headers
+            opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
 
             state=decodeState::OPCODE;
 
@@ -221,16 +230,21 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
         }
     }
 
+
+
     return true;
 }
 
 const std::pair<std::string, std::string>* Decoder::unpackIndexed(const std::size_t index, const Hpack::DynamicTable &dynamicTable)
 {
+
+    //根据索引在相应的表中找到name+value
     if(Hpack::getStaticTableSize()>=index){//header位于静态表中
         return &Hpack::static_table[index-1];
     }else if(dynamicTable.size()+Hpack::getStaticTableSize()>=index){//header位于动态表中
         return &dynamicTable[index-Hpack::getStaticTableSize()-1];
     }
+
 
     return nullptr;
 }

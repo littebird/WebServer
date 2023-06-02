@@ -27,7 +27,7 @@ Session::Session(const std::string& address, const std::string& port)
      acceptor_.bind(endpoint);//绑定套接字
      acceptor_.listen();//监听
 
-    start_accept();
+     start_accept();
 }
 
 void Session::run()//线程池实现
@@ -85,7 +85,7 @@ std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& 
     auto connections=this->connections_;
     auto mutex_con=this->mutex_;
     auto connection=std::shared_ptr<Connection>(new Connection(io_ctx),[connections,mutex_con](Connection* connection){
-        //用lambda自定义connection智能指针释放资源方式
+        //用lambda自定义connection智能指针释放资源方式,删除器
         {//缩小锁的粒度
             std::unique_lock<std::mutex> lock(*mutex_con);
             auto it=connections->find(connection);
