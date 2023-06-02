@@ -42,26 +42,27 @@ enum error_code{//rst_streamz帧和goaway帧的状态码
     ENHANCE_YOUR_CALM = 0x0b,
     INADEQUATE_SECURITY = 0x0c,
 };
-struct nv{//键值对结构
-    uint8_t *name;
-    uint8_t *value;
-    std::size_t namelen;
-    std::size_t valuelen;
-    uint8_t flags;//标记内容在nv_flag
-};
-enum nv_flag{//键值对标记
-    NV_FLAG_NONE = 0,
-    NV_FLAG_NO_INDEX = 0x01,
-    NV_FLAG_NO_COPY_NAME = 0x02,
-    NO_COPY_VALUE = 0x04
-};
+//struct nv{//键值对结构
+//    uint8_t *name;
+//    uint8_t *value;
+//    std::size_t namelen;
+//    std::size_t valuelen;
+//    uint8_t flags;//标记内容在nv_flag
+//};
+//enum nv_flag{//键值对标记
+//    NV_FLAG_NONE = 0,
+//    NV_FLAG_NO_INDEX = 0x01,
+//    NV_FLAG_NO_COPY_NAME = 0x02,
+//    NO_COPY_VALUE = 0x04
+//};
 class Frame
 {
 public:
     Frame();
     virtual uint8_t get_frame_type()=0;//返回帧的类型
     virtual uint8_t get_frame_flag()=0;//返回帧的标记
-
+protected:
+    frame_hd _frame_hd;//帧首部
 };
 
 #endif // FRAME_H
