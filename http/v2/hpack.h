@@ -33,7 +33,7 @@ namespace Hpack {
         uint32_t cur_header_entry_size;
 
     public:
-        DynamicTable():header_table_size(0),max_header_entry_size(256),cur_header_entry_size(0){
+        DynamicTable():header_table_size(4096),max_header_entry_size(256),cur_header_entry_size(0){
 
         }
 

@@ -3,11 +3,13 @@
 #include "session.h"
 #include "log/logs.h"
 
-#include "encoder.h"
-#include "decoder.h"
+#include "http/v2/encoder.h"
+#include "http/v2/decoder.h"
+#include <fstream>
 
 int main()
 {
+    void test_hpack();
     try {
         const std::string& address="127.0.0.1";
         const std::string& port="80";
@@ -20,6 +22,8 @@ int main()
     }
 
     return 0;
+
+//    test_hpack();
 }
 
 void  test_hpack(){
@@ -35,9 +39,12 @@ void  test_hpack(){
     std::vector<char> res;
     encoder.encode(res,headers,requestTable);
 
+    std::string full_path{"/root/hpack"};
+    std::ofstream ofs(full_path.c_str(),std::ios::out | std::ios::binary);//以写，二进制方式打开文件
+
     std::string str;
     for(auto &ch:res){
-//        std::cout<<(uint8_t)ch;
+        ofs<<ch;
         str+=ch;
     }
 
@@ -52,5 +59,5 @@ void  test_hpack(){
     if(!decode.decode(ustrs,str.length(),responseTable))
         std::cout<<"false"<<std::endl;
 
-    std::cout<<responseTable[0].second<<"\n";
+//    std::cout<<responseTable[0].second<<"\n";
 }
