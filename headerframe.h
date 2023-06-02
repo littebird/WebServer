@@ -16,7 +16,7 @@ enum headers_category{//报头的类别，它指示帧的角色。
 class HeaderFrame: public Frame//headers帧类
 {
 public:
-    HeaderFrame(const frame_hd &frame_hd,std::size_t padlen,
+    HeaderFrame(std::size_t padlen,
                 uint8_t E,uint32_t stream_dp,
                 headers_category cat,uint8_t wight,uint32_t padding,
                 const std::unordered_map<std::string,std::string> &header_block);
@@ -24,7 +24,6 @@ public:
     uint8_t get_frame_type();//返回帧的类型
     uint8_t get_frame_flag();//返回帧的标记
 private:
-    frame_hd m_frame_hd;//帧首部
     std::size_t m_padlen;//帧内填充的长度
     uint8_t m_E;//标识流依赖性是唯一的单位标志
     uint32_t m_stream_dp;//流依赖

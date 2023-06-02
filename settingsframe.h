@@ -21,9 +21,8 @@ enum settings_id{//settings id参数定义
 class SettingsFrame : public Frame
 {
 public:
-    SettingsFrame(frame_hd frame_hd,settings_entry *iv,std::size_t niv);
+    SettingsFrame(settings_entry *iv,std::size_t niv);
 private:
-    frame_hd m_frame_hd;//帧首部
     std::size_t m_niv;//总共键值对的个数
     settings_entry *m_iv;//键值对
 };
