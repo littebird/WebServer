@@ -5,6 +5,13 @@ Http2_Stream::Http2_Stream()
 {
 
 }
+
+Http2_Stream::Http2_Stream(uint32_t streamid,const ConnectionData &conn)
+    :m_stream_id(streamid),
+     m_connectiondata(conn)
+{
+
+}
 void Http2_Stream::stream_init(uint32_t stream_id,http2_stream_state state)
 {
     m_stream_id=stream_id;

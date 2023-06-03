@@ -2,8 +2,8 @@
 #define FRAME_H
 
 #include<string>
-enum headerframe_flag{//头部帧标志
-    NONE=0,
+enum frameHeader_flag{//头部帧标志
+    EMPTY=0,
     END_STREAM=0x01,
     END_HEADERS=0x04,
     PADDED=0x08,
@@ -13,7 +13,7 @@ struct frame_hd{//帧首部
     std::size_t length;//帧载荷的长度
     uint32_t stream_id;//流标识符
     uint8_t type;//帧类型，决定帧的格式和语义
-    uint8_t flag;//一个特定于帧类型的8位boolean标记保留字段。
+    uint8_t flags;//一个特定于帧类型的8位boolean标记保留字段。
     uint8_t reserved;//一个保留的1位字段。
 };
 enum frame_type{//帧类型

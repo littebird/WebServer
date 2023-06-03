@@ -24,5 +24,5 @@ uint8_t HeaderFrame::get_frame_type()
 }
 uint8_t HeaderFrame::get_frame_flag()
 {
-    return _frame_hd.flag;
+    return _frame_hd.flags;
 }
