@@ -18,11 +18,4 @@ void HeaderFrame::set_category(headers_category cat)
 {
    m_cat=cat;
 }
-uint8_t HeaderFrame::get_frame_type()
-{
-    return _frame_hd.type;
-}
-uint8_t HeaderFrame::get_frame_flag()
-{
-    return _frame_hd.flag;
-}
+

@@ -1,0 +1,7 @@
+127.0.0.1 - - [Sat Jun  3 15:40:39 2023] " GET /index.html 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:40:39 2023] " GET /1.png 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:40:39 2023] " GET /1.png 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:40:48 2023] " GET /index.html 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:40:48 2023] " GET /1.png 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:40:54 2023] " GET /load.html 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0
+127.0.0.1 - - [Sat Jun  3 15:41:00 2023] " GET /load.html 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0

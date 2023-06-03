@@ -61,7 +61,7 @@ bool Http2_Stream::set_send_stream_state(std::shared_ptr<Frame> &item)
         }
         case http2_stream_state::STREAM_OPEN:
         {
-            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
+            if(item->get_frame_flags()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_LOCAL_HALF_CLOSED;
             }
@@ -74,7 +74,7 @@ bool Http2_Stream::set_send_stream_state(std::shared_ptr<Frame> &item)
         }
         case http2_stream_state::STREAM_REMOTE_HALF_CLOSED:
         {
-            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
+            if(item->get_frame_flags()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_CLOSE;
             }
@@ -115,14 +115,14 @@ bool Http2_Stream::set_recieve_stream_state(std::shared_ptr<Frame> &item)
         }
         case http2_stream_state::STREAM_OPEN:
         {
-            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
+            if(item->get_frame_flags()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_REMOTE_RESERVED;
             }
         }
         case http2_stream_state::STREAM_LOCAL_HALF_CLOSED:
         {
-            if(item->get_frame_flag()==0x01)//如果该帧的标识为end_stream
+            if(item->get_frame_flags()==0x01)//如果该帧的标识为end_stream
             {
                 m_state=STREAM_CLOSE;
             }

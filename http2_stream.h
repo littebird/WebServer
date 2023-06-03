@@ -2,9 +2,9 @@
 #define HTTP2_STREAM_H
 
 #include <string>
-//#include<memory.h>
 #include <boost/shared_ptr.hpp>
 #include"frame.h"
+#include"http/v2/hpack.h"
 //流的状态
 enum http2_stream_state{
     STREAM_IDLE,//流的初始状态
@@ -25,10 +25,13 @@ public:
     bool set_recieve_stream_state(std::shared_ptr<Frame> &item);//接收帧时流状态的改变
     void set_weight(uint32_t weight);//设置权重
     uint32_t get_stream_id();//返回流id
-private:
+
+    Hpack::DynamicTable dynamicTable;
     uint32_t m_stream_id;//流id
     http2_stream_state m_state;//流的状态
     uint32_t m_weight;//流的权重
+    void *reserved;//保留位
+
 };
 
 #endif // HTTP2_STREAM_H

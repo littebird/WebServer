@@ -21,8 +21,6 @@ public:
                 headers_category cat,uint8_t wight,uint32_t padding,
                 const std::unordered_map<std::string,std::string> &header_block);
     void set_category(headers_category cat);//设置报头帧标志
-    uint8_t get_frame_type();//返回帧的类型
-    uint8_t get_frame_flag();//返回帧的标记
 private:
     std::size_t m_padlen;//帧内填充的长度
     uint8_t m_E;//标识流依赖性是唯一的单位标志
