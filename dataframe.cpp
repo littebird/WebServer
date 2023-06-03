@@ -11,5 +11,5 @@ DataFrame::DataFrame(std::size_t padlen,
 
 uint8_t DataFrame::get_frame_flag()
 {
-    return _frame_hd.flag;
+    return _frame_hd.flags;
 }

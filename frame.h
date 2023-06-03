@@ -2,6 +2,7 @@
 #define FRAME_H
 
 #include<string>
+
 enum frameHeader_flag{//帧首部标志
     EMPTY=0x0,
     ACK=0x01,
