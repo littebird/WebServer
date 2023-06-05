@@ -75,7 +75,7 @@ uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize, 
 }
 
 error_code Http2Server::parseHttp2Date(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
-{
+{//解析data帧
     if(incframe._frame_hd.stream_id==0){//流id为0
         return error_code::PROTOCOL_ERROR;
     }
@@ -113,7 +113,7 @@ error_code Http2Server::parseHttp2Date(Frame &incframe, Http2_Stream &incstream,
 }
 
 error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
-{
+{//解析header帧
     incstream.m_state=(incframe._frame_hd.flags&frameHeader_flag::END_STREAM)?http2_stream_state::STREAM_LOCAL_HALF_CLOSED
                                                                             :http2_stream_state::STREAM_OPEN;
     uint8_t padding = 0;
@@ -147,6 +147,78 @@ error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
 }
 
 error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
-{
+{//解析setting帧
+    if(incframe._frame_hd.stream_id!=0){//streamid应该为0
+        return error_code::PROTOCOL_ERROR;
+    }
 
+    if(incframe._frame_hd.length%(sizeof(uint16_t)+sizeof(uint32_t))){//检查长度
+        return error_code::FRAME_SIZE_ERROR;
+    }
+
+    if(incstream.m_state!=http2_stream_state::STREAM_OPEN){
+        incstream.m_state=http2_stream_state::STREAM_OPEN;
+    }
+
+    ConnectionSettings &settings=incstream.m_connectiondata.client_settings;
+
+    while(src!=end){
+        const settings_id setting = static_cast<settings_id>(
+                        ntohs(*reinterpret_cast<const uint16_t *>(src) )
+                    );
+
+        src+=sizeof(uint16_t);
+
+        const uint32_t value=::htonl(*reinterpret_cast<const uint32_t*>(src));
+
+        switch(setting){
+        case settings_id::SETTINGS_HEADER_TABLE_SIZE :{
+            settings.header_table_size=value;
+            break;
+        }
+        case settings_id::SETTINGS_ENABLE_PUSH:{
+            if(value>1){
+                return error_code::PROTOCOL_ERROR;
+            }
+
+            settings.enable_push=value;
+
+            break;
+        }
+        case settings_id::SETTINGS_MAX_CONCURRENT_STREAMS:{
+            settings.max_concurrent_streams=value;
+            break;
+
+
+        }
+        case settings_id::SETTINGS_INITIAL_WINDOW_SIZE:{
+            if(value>=uint32_t(1)<<31){
+                return error_code::FLOW_CONTROL_ERROR;
+            }
+
+            settings.initial_window_size=value;
+
+            break;
+        }
+        case settings_id::SETTINGS_MAX_FRAME_SIZE:{
+            if(value<(1<<14)||value>=(1<<24)){
+                return error_code::PROTOCOL_ERROR;
+            }
+
+            settings.max_frame_size=value;
+
+            break;
+        }
+        case settings_id::SETTINGS_MAX_HEADER_LIST_SIZE:{
+            settings.max_header_list_size=value;
+
+            break;
+        }
+        default:
+            break;
+        }
+
+    }
+
+    return error_code::NO_ERROR;
 }
