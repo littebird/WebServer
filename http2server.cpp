@@ -26,6 +26,93 @@ void Http2Server::process(Connection &sock)
     std::size_t streams_process_count = 0;
     uint32_t last_stream_id = 0;
 
+    Frame incframe;
+    long read_size = 0;
+
+    do{
+        if(getNextHttp2FrameMeta(sock,req.timeout,buf,incframe,read_size)==false)
+        {
+            break;
+        }
+
+        const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data())+FRAME_HEADER_SIZE;
+        const uint8_t *end=addr+incframe._frame_hd.length;
+
+        if(incframe._frame_hd.stream_id>last_stream_id)
+        {
+            last_stream_id=incframe._frame_hd.stream_id;
+        }
+
+        Http2_Stream &stream=getStreamData(streams,incframe._frame_hd.stream_id,conn);
+
+        if(stream.m_state==http2_stream_state::STREAM_CLOSE)
+        {
+            //rststream;
+            continue;
+        }
+
+        if(incframe._frame_hd.type!=frame_type::HTTP2_CONTINUATION)
+        {
+            stream.m_frame_type=incframe._frame_hd.type;
+
+        }
+
+        error_code result=error_code::NO_ERROR;
+
+        switch(stream.m_frame_type)
+        {
+            case frame_type::HTTP2_DATA:
+            {
+                result=parseHttp2Date(incframe,stream,addr,end);
+
+                if(stream.reserved)
+                {
+                    //设置窗口大小更新
+                }
+                break;
+            }
+            case frame_type::HTTP2_HEADERS:
+            {
+                result=parseHttp2Headers(incframe,stream,addr,end);
+                if(incframe._frame_hd.flags&&frameHeader_flag::END_HEADERS)
+                {
+
+
+                }
+                break;
+            }
+            case frame_type::HTTP2_PRIORITY:
+            {
+                result=error_code::NO_ERROR;
+                break;
+            }
+            case frame_type::HTTP2_SETTINGS:
+            {
+                result=parseHttp2Settings(incframe,stream,addr,end);
+
+                if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&&frameHeader_flag::ACK)==false)
+                {
+                    send_empty_settings(sock,req.timeout,frameHeader_flag::ACK);
+                }
+                break;
+            }
+            case frame_type::HTTP2_PUSH_PROMISE:
+            {
+                result=error_code::NO_ERROR;
+                break;
+            }
+            defult:
+                result=error_code::PROTOCOL_ERROR;
+                break;
+        }
+
+        if(result!=error_code::NO_ERROR)
+        {
+            stream.m_state=http2_stream_state::STREAM_CLOSE;
+
+        }
+
+    }while(1);
 }
 
 void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::milliseconds &timeout,
@@ -36,11 +123,13 @@ void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::
     std::array<uint8_t,frame_header_size+frame_size> buf;
     uint8_t *addr=buf.data();
     constexpr uint32_t stream_id=0;
-    addr=set_frame_header(addr,frame_size,frame_type::NGHTTP2_SETTINGS,flags,stream_id);
+    addr=set_frame_header(addr,frame_size,frame_type::HTTP2_SETTINGS,flags,stream_id);
     //to do发送空的settings帧
 }
 
-uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize, const frame_type frametype, const frameHeader_flag frameflag, const uint32_t streamid)
+uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
+                                       const frame_type frametype, const frameHeader_flag frameflag,
+                                       const uint32_t streamid)
 {
     static endianness endian=endianness::INIT;
 
@@ -71,7 +160,38 @@ uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize, 
     *(addr + 3) = static_cast<const uint8_t>(frametype);
     *(addr + 4) = static_cast<const uint8_t>(frameflag);
     *reinterpret_cast<uint32_t *>(addr+5)=::htonl(streamid);
-    return (addr+9);
+    return (addr+FRAME_HEADER_SIZE);
+}
+
+bool Http2Server::getNextHttp2FrameMeta(const Connection &sock,const std::chrono::milliseconds &timeout,
+                                        std::vector<char> &buf,Frame incframe,
+                                        long &read_size)
+{
+    const long length=long(incframe._frame_hd.length+FRAME_HEADER_SIZE);
+    if(read_size<=length)
+    {
+        if(read_size==length)
+        {
+            read_size=0;
+        }
+        //to do 读数据
+        if(read_size<long(FRAME_HEADER_SIZE)){
+            return false;
+        }
+    }
+    else{
+        std::copy(buf.data()+length,buf.data()+read_size,buf.data());
+
+        read_size-=length;
+    }
+    const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data());
+
+    incframe._frame_hd.length=ntoh24(addr);
+    incframe._frame_hd.type=static_cast<frame_type>(*(addr + 3) );
+    incframe._frame_hd.flags=static_cast<frameHeader_flag>(*(addr + 4) );
+    incframe._frame_hd.stream_id = ::ntohl(*reinterpret_cast<const uint32_t *>(addr + 5) );
+
+    return true;
 }
 
 error_code Http2Server::parseHttp2Date(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
@@ -223,4 +343,46 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
     }
 
     return error_code::NO_ERROR;
+}
+
+uint32_t Http2Server::ntoh24(const void *src24) noexcept
+{
+    static endianness endian=endianness::INIT;
+
+            union {
+                uint32_t ui;
+                uint8_t c[sizeof(uint32_t)];
+            } x;
+
+            if (endian == endianness::INIT) {
+                x.ui = 0x01;
+                endian = (x.c[3] == 0x01) ? endianness::BIGE : endianness::LITE;
+            }
+
+            if (endian == endianness::BIGE) {
+                return *reinterpret_cast<const uint32_t *>(src24) >> 8;
+            }
+
+            const uint8_t *addr = reinterpret_cast<const uint8_t *>(src24);
+
+            x.ui = 0;
+
+            x.c[0] = addr[2];
+            x.c[1] = addr[1];
+            x.c[2] = addr[0];
+
+            return x.ui;
+}
+
+Http2_Stream &Http2Server::getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
+                                        const uint32_t streamId,ConnectionData &conn)
+{
+    auto it=streams.find(streamId);
+
+    if(streams.end()!=it)
+    {
+        return it->second;
+    }
+
+    return streams.emplace(streamId,Http2_Stream(streamId,conn)).first->second;
 }

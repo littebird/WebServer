@@ -18,16 +18,16 @@ struct frame_hd{//帧首部
     uint8_t flags;//一个特定于帧类型的8位boolean标记保留字段。
     uint8_t reserved;//一个保留的1位字段。
 };
-enum frame_type{//帧类型
-    NGHTTP2_DATA = 0,
-    NGHTTP2_HEADERS = 0x01,
-    NGHTTP2_PRIORITY = 0x02,
-    NGHTTP2_RST_STREAM = 0x03,
-    NGHTTP2_SETTINGS = 0x04,
-    NGHTTP2_PUSH_PROMISE = 0x05,
-    NGHTTP2_PING = 0x06,
-    NGHTTP2_GOAWAY = 0x07,
-    NGHTTP2_CONTINUATION = 0x09,
+enum frame_type: uint8_t{//帧类型
+    HTTP2_DATA = 0,
+    HTTP2_HEADERS = 0x01,
+    HTTP2_PRIORITY = 0x02,
+    HTTP2_RST_STREAM = 0x03,
+    HTTP2_SETTINGS = 0x04,
+    HTTP2_PUSH_PROMISE = 0x05,
+    HTTP2_PING = 0x06,
+    HTTP2_GOAWAY = 0x07,
+    HTTP2_CONTINUATION = 0x09,
 };
 enum error_code{//rst_streamz帧和goaway帧的状态码
     NO_ERROR = 0x00,
