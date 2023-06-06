@@ -117,7 +117,7 @@ error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
     incstream.m_state=(incframe._frame_hd.flags&frameHeader_flag::END_STREAM)?http2_stream_state::STREAM_LOCAL_HALF_CLOSED
                                                                             :http2_stream_state::STREAM_OPEN;
     uint8_t padding = 0;
-    if(incframe._frame_hd.flags&frameHeader_flag::PADDED){
+    if(incframe._frame_hd.flags&frameHeader_flag::PADDED){//帧首部带有padded标记
         padding=*src;
 
         if(padding>=incframe._frame_hd.length){
@@ -127,8 +127,10 @@ error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
         src+=sizeof (uint8_t);
     }
 
-    if(incframe._frame_hd.flags&frameHeader_flag::PRIORIY){
+    if(incframe._frame_hd.flags&frameHeader_flag::PRIORIY){//帧首部带有priority帧
         const uint32_t depend_stream_id=::ntohl(*reinterpret_cast<const uint32_t *>(src))&~(uint32_t(1)<<31);
+
+        //暂未实现
 
         src+=sizeof (uint32_t);
 
@@ -138,7 +140,7 @@ error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
     }
 
     Decoder decoder;
-    if(decoder.decode(src,std::size_t(end-src)-padding,incstream.dynamicTable)==false){
+    if(decoder.decode(src,std::size_t(end-src)-padding,incstream.dynamicTable)==false){//解码头部块
         return error_code::COMPRESSION_ERROR;
     }
 
@@ -172,11 +174,11 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
         const uint32_t value=::htonl(*reinterpret_cast<const uint32_t*>(src));
 
         switch(setting){
-        case settings_id::SETTINGS_HEADER_TABLE_SIZE :{
+        case settings_id::SETTINGS_HEADER_TABLE_SIZE :{//设置header表大小
             settings.header_table_size=value;
             break;
         }
-        case settings_id::SETTINGS_ENABLE_PUSH:{
+        case settings_id::SETTINGS_ENABLE_PUSH:{//推送
             if(value>1){
                 return error_code::PROTOCOL_ERROR;
             }
@@ -185,13 +187,13 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
             break;
         }
-        case settings_id::SETTINGS_MAX_CONCURRENT_STREAMS:{
+        case settings_id::SETTINGS_MAX_CONCURRENT_STREAMS:{//当前流最大数量
             settings.max_concurrent_streams=value;
             break;
 
 
         }
-        case settings_id::SETTINGS_INITIAL_WINDOW_SIZE:{
+        case settings_id::SETTINGS_INITIAL_WINDOW_SIZE:{//流量控制
             if(value>=uint32_t(1)<<31){
                 return error_code::FLOW_CONTROL_ERROR;
             }
@@ -200,7 +202,7 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
             break;
         }
-        case settings_id::SETTINGS_MAX_FRAME_SIZE:{
+        case settings_id::SETTINGS_MAX_FRAME_SIZE:{//设置帧载荷的最大大小
             if(value<(1<<14)||value>=(1<<24)){
                 return error_code::PROTOCOL_ERROR;
             }
@@ -209,7 +211,7 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
             break;
         }
-        case settings_id::SETTINGS_MAX_HEADER_LIST_SIZE:{
+        case settings_id::SETTINGS_MAX_HEADER_LIST_SIZE:{///设置header表最大大小
             settings.max_header_list_size=value;
 
             break;
