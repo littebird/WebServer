@@ -43,6 +43,7 @@ public:
     ConnectionData m_connectiondata;
     http2_stream_state m_state;//流的状态
     uint32_t m_weight;//流的权重
+    uint8_t m_frame_type;
     void *reserved;//保留位
 
 };
