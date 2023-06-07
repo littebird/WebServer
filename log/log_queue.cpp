@@ -56,13 +56,14 @@ void Log_Queue::push(Log &item)
     m_cond.notify_one();//唤醒线程
 }
 
-bool Log_Queue::pop()
+bool Log_Queue::pop(Log &item)
 {
     std::unique_lock<std::mutex> lg(m_mutex);
     while(m_array.empty())
     {
         m_cond.wait(lg);//线程等待
     }
+    item=m_array.front();
     m_array.pop();
     return true;
 }

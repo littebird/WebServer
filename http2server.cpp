@@ -22,7 +22,8 @@ void Http2Server::process(Connection &sock)
       {0,Http2_Stream(0,conn)}
     };
 
-    this->stream=streams.find(0)->second;
+    Http2_Stream &primary=streams.find(0)->second;
+    this->stream=primary;
     std::size_t streams_process_count = 0;
     uint32_t last_stream_id = 0;
 
@@ -90,7 +91,7 @@ void Http2Server::process(Connection &sock)
             {
                 result=parseHttp2Settings(incframe,stream,addr,end);
 
-                if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&&frameHeader_flag::ACK)==false)
+                if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&frameHeader_flag::ACK)==false)
                 {
                     send_empty_settings(sock,req.timeout,frameHeader_flag::ACK);
                 }
@@ -109,10 +110,19 @@ void Http2Server::process(Connection &sock)
         if(result!=error_code::NO_ERROR)
         {
             stream.m_state=http2_stream_state::STREAM_CLOSE;
+            //rststream
 
         }
+        else if((incframe._frame_hd.flags & frameHeader_flag::END_STREAM)&& incframe._frame_hd.stream_id!=0)
+        {
+            //处理队列
+        }
 
-    }while(1);
+    }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
+
+    goAway(sock,req.timeout,conn,last_stream_id,error_code::NO_ERROR);
+
+
 }
 
 void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::milliseconds &timeout,
@@ -124,7 +134,7 @@ void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::
     uint8_t *addr=buf.data();
     constexpr uint32_t stream_id=0;
     addr=set_frame_header(addr,frame_size,frame_type::HTTP2_SETTINGS,flags,stream_id);
-    //to do发送空的settings帧
+    //to do发送数据
 }
 
 uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
@@ -383,4 +393,24 @@ Http2_Stream &Http2Server::getStreamData(std::unordered_map<uint32_t,Http2_Strea
     }
 
     return streams.emplace(streamId,Http2_Stream(streamId,conn)).first->second;
+}
+
+void Http2Server::goAway(Connection &sock, const std::chrono::milliseconds &timeout,
+                         ConnectionData &conn, const uint32_t lastStreamId,
+                         const error_code errorcode)
+{
+    constexpr uint32_t frame_size = sizeof(uint32_t) * 2;
+
+    std::array<uint8_t,FRAME_HEADER_SIZE + frame_size> buf;
+
+    uint8_t *addr=buf.data();
+
+    addr=set_frame_header(addr,frame_size,frame_type::HTTP2_RST_STREAM,frameHeader_flag::EMPTY,0);
+
+    *reinterpret_cast<uint32_t *>(addr) = ::htonl(lastStreamId);
+
+    *reinterpret_cast<uint32_t *>(addr + sizeof(uint32_t) ) = ::htonl(static_cast<const uint32_t>(errorcode));
+
+    //发送数据
+
 }
