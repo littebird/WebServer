@@ -52,6 +52,9 @@ public:
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
+    static void goAway(Connection &sock,const std::chrono::milliseconds &timeout,
+                       ConnectionData &conn,const uint32_t lastStreamId,
+                       const error_code errorcode);
 private:
     Http2_Stream stream;
 };

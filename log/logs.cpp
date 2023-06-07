@@ -23,10 +23,11 @@ void* Logs::flush_log_thread(void *args)
 
 void* Logs::async_write_log()
 {
-    while(m_log_queue.pop())//获取队列数据
+    Log item;
+    while(m_log_queue.pop(item))//获取队列数据
     {
         std::unique_lock<std::mutex> lg(m_mutex);
-        if(accesslog->getname()=="accesslog")//判断是否为access日志
+        if(accesslog->getname()==item.getname())//判断是否为access日志
         {
             //ios::out(为输出写而打开文件) ios::app(所有输出附加在文件末尾)
             m_file.open("../WebServer/resource/accesslogfiles.txt",std::ios::out|std::ios::app);

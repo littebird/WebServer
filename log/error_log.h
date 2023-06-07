@@ -4,6 +4,7 @@
 #include<string>
 #include<time.h>
 #include<mutex>
+#include<iostream>
 #include"log.h"
 
 class Error_log : public Log//错误日志

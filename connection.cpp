@@ -59,7 +59,6 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         _response->buildResponse();
 
         Logs *logs=Logs::get_instance();
-
         if(_response->statusCode()=="Not Found")
         {
 
