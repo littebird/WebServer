@@ -90,7 +90,7 @@ void Http2Server::process(Connection &sock)
             {
                 result=parseHttp2Settings(incframe,stream,addr,end);
 
-                if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&&frameHeader_flag::ACK)==false)
+                if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&frameHeader_flag::ACK)==false)
                 {
                     send_empty_settings(sock,req.timeout,frameHeader_flag::ACK);
                 }
@@ -331,7 +331,7 @@ error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
             break;
         }
-        case settings_id::SETTINGS_MAX_HEADER_LIST_SIZE:{///设置header表最大大小
+        case settings_id::SETTINGS_MAX_HEADER_LIST_SIZE:{//设置header表最大大小
             settings.max_header_list_size=value;
 
             break;
