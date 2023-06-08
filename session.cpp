@@ -25,8 +25,8 @@ Session::Session(const std::string& address, const std::string& port)
                          boost::asio::ssl::context::no_sslv2|
                          boost::asio::ssl::context::single_dh_use);
     context_.set_password_callback(boost::bind(&Session::get_password,this));
-    context_.use_certificate_chain_file("../WebServer/resource/cert.pem");//证书文件
-    context_.use_private_key_file("../WebServer/resource/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
+    context_.use_certificate_chain_file("/root/cert.pem");//证书文件
+    context_.use_private_key_file("/root/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
 
 
     boost::asio::ip::tcp::resolver resolver(io_context_);

@@ -24,7 +24,7 @@ private:
     void handle_accept(std::shared_ptr<Connection> new_connection,const boost::system::error_code& e);//持续等待连接，进行递归调用
     void handle_stop();//关闭io
     std::string get_password()const{
-        return "123456";
+        return "123456";//私钥密码
     }
 
 
