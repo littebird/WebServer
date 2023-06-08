@@ -34,6 +34,13 @@ void Connection::start()
                                               boost::asio::placeholders::bytes_transferred));
 }
 
+void Connection::start_h2()
+{
+
+}
+
+
+
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer, const boost::system::error_code& error, std::size_t bytes_transferred)
 {
     cancel_timeout();

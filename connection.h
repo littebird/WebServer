@@ -21,7 +21,7 @@ public:
     explicit Connection(boost::asio::io_context& io_context);
     boost::asio::ip::tcp::socket& socket();//给外部提供套接字的引用对象接口
     void start();//读取请求内容
-
+    void start_h2();
 private:
     void handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& e,std::size_t bytes_transferred);
     void handle_write(std::shared_ptr<HttpResponse> response,const boost::system::error_code& e);
