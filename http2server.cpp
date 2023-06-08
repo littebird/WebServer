@@ -185,6 +185,7 @@ bool Http2Server::getNextHttp2FrameMeta(const Connection &sock,const std::chrono
             read_size=0;
         }
         //to do 读数据
+
         if(read_size<long(FRAME_HEADER_SIZE)){
             return false;
         }

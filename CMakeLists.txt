@@ -11,7 +11,7 @@ project( WebServer
 #         string
 #)
          
-add_executable( WebServer )
+add_executable( WebServer main.cpp)
 
 target_sources( WebServer PRIVATE 
                 main.cpp connection.h connection.cpp
@@ -64,7 +64,7 @@ target_compile_definitions(WebServer
 
 #target_link_directories( WebServer PRIVATE /usr/lib )
 
-target_link_libraries( WebServer PRIVATE uring )
+target_link_libraries( WebServer PRIVATE uring ssl crypto)
 
 #set_target_properties( WebServer PROPERTIES
             #CXX_STANDARD 20

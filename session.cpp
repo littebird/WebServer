@@ -6,7 +6,7 @@ using boost::asio::ip::tcp;
 using boost::asio::buffer;
 using boost::system::error_code;
 Session::Session(const std::string& address, const std::string& port)
-    :
+    :context_(boost::asio::ssl::context::sslv23),
     acceptor_(io_context_),
     signals_(io_context_),
     mutex_(new std::mutex()),
@@ -17,7 +17,17 @@ Session::Session(const std::string& address, const std::string& port)
 #if defined(SIGQUIT)
     signals_.add(SIGQUIT);
 #endif // defined(SIGQUIT)
+
     signals_.async_wait(boost::bind(&Session::handle_stop, this));
+
+    //设置ssl上下文
+    context_.set_options(boost::asio::ssl::context::default_workarounds|
+                         boost::asio::ssl::context::no_sslv2|
+                         boost::asio::ssl::context::single_dh_use);
+    context_.set_password_callback(boost::bind(&Session::get_password,this));
+    context_.use_certificate_chain_file("../WebServer/resource/cert.pem");//证书文件
+    context_.use_private_key_file("../WebServer/resource/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
+
 
     boost::asio::ip::tcp::resolver resolver(io_context_);
      boost::asio::ip::tcp::endpoint endpoint =
@@ -55,7 +65,7 @@ void Session::run()//线程池实现
 void Session::start_accept()
 {
 
-    auto new_connection=create_connection(io_context_);
+    auto new_connection=create_connection(io_context_,context_);
     acceptor_.async_accept(new_connection->socket(),//异步等待连接
                            boost::bind(&Session::handle_accept, this,
                                        new_connection,
@@ -79,12 +89,12 @@ void Session::handle_stop()
 
 }
 
-std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& io_ctx)
+std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& io_ctx,boost::asio::ssl::context& ctx)
 {
 
     auto connections=this->connections_;
     auto mutex_con=this->mutex_;
-    auto connection=std::shared_ptr<Connection>(new Connection(io_ctx),[connections,mutex_con](Connection* connection){
+    auto connection=std::shared_ptr<Connection>(new Connection(io_ctx,ctx),[connections,mutex_con](Connection* connection){
         //用lambda自定义connection智能指针释放资源方式,删除器
         {//缩小锁的粒度
             std::unique_lock<std::mutex> lock(*mutex_con);
