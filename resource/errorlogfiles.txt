@@ -1,4 +1,0 @@
-[Wed Jun  7 15:33:54 2023] [error] [client127.0.0.1] error_infomations:404 Not Found
-[Wed Jun  7 15:33:54 2023] [error] [client127.0.0.1] error_infomations:404 Not Found
-[Wed Jun  7 15:34:01 2023] [error] [client127.0.0.1] error_infomations:404 Not Found
-[Wed Jun  7 15:34:01 2023] [error] [client127.0.0.1] error_infomations:404 Not Found

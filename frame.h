@@ -45,10 +45,11 @@ enum error_code{//rst_streamz帧和goaway帧的状态码
     INADEQUATE_SECURITY = 0x0c,
 };
 
-constexpr uint32_t FRAME_HEADER_SIZE=9;
-constexpr uint32_t MAX_WINDOW_UPDATE=(uint32_t(1)<<31)-1;
-constexpr uint32_t MAX_FRAME_SIZE=16384;
+constexpr uint32_t FRAME_HEADER_SIZE=9;     //帧首部字节数
+constexpr uint32_t MAX_WINDOW_UPDATE=(uint32_t(1)<<31)-1;   //流量控制
+constexpr uint32_t MAX_FRAME_SIZE=16384;    //默认最大帧载荷的长度
 
+//帧结构：帧首部+帧有效载荷
 
 class Frame
 {

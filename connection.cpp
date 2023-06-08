@@ -2,25 +2,32 @@
 
 #include <iostream>
 #include <thread>
-Connection::Connection(boost::asio::io_context& io_context)
+Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
   : strand_(boost::asio::make_strand(io_context)),
-    socket_(new boost::asio::ip::tcp::socket(io_context)),
+    socket_(new ssl_socket(io_context,context)),
     mutex_(new std::mutex())
 {
 //    count=0;
 }
 
-boost::asio::ip::tcp::socket& Connection::socket()
+ssl_socket::lowest_layer_type& Connection::socket()
 {
-    return *socket_;
+    return (*socket_).lowest_layer();
 }
 
 void Connection::start()
 {
 
-//    std::cout<<std::this_thread::get_id()<<std::endl;
-//    count++;
-//    std::cout<<count<<std::endl;
+    (*socket_).async_handshake(boost::asio::ssl::stream_base::server,boost::bind(&Connection::handle_handshake,shared_from_this(),boost::asio::placeholders::error));//ssl握手
+
+}
+
+void Connection::handle_handshake(const boost::system::error_code &error)
+{
+    //    std::cout<<std::this_thread::get_id()<<std::endl;
+    //    count++;
+    //    std::cout<<count<<std::endl;
+
 
     set_timeout(5);//设置超时时间
 
@@ -70,10 +77,10 @@ void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer
         {
 
             logs->get_errorlog()->init(_response->_curTime,
-                                       "error",socket_->remote_endpoint().address().to_string(),"404 Not Found");
+                                       "error",socket().remote_endpoint().address().to_string() ,"404 Not Found");
             logs->logQueue().push(*logs->get_errorlog());
         }else{
-            logs->get_accesslog()->init(socket_->remote_endpoint().address().to_string(),
+            logs->get_accesslog()->init(socket().remote_endpoint().address().to_string(),
                                                   _response->_curTime,_request->method(),
                                                     _request->uri(),_request->version(),
                                           _response->statusCode(),_request->body_size(),
@@ -97,7 +104,7 @@ void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost
     if (!e)
       {
         if(response->isKeepAlive()){//是否长连接
-            start();
+            handle_handshake(e);
 
         }else close();
         //to do process
@@ -109,8 +116,8 @@ void Connection::close()
 {
     boost::system::error_code ignored_ec;
     //关闭双方连接
-    socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
-    socket_->close(ignored_ec);
+    socket().cancel();
+    socket_->shutdown(ignored_ec);
 }
 
 void Connection::set_timeout(long seconds) {
@@ -119,7 +126,7 @@ void Connection::set_timeout(long seconds) {
         return;
     }
 
-    timer_ = std::unique_ptr<boost::asio::steady_timer>(new boost::asio::steady_timer((boost::asio::io_context&)(socket_)->get_executor().context()));
+    timer_ = std::unique_ptr<boost::asio::steady_timer>(new boost::asio::steady_timer((boost::asio::io_context&)socket().get_executor().context()));
     timer_->expires_from_now(std::chrono::seconds(seconds));
     auto self = this->shared_from_this();
     timer_->async_wait([self](const boost::system::error_code &ec) {
