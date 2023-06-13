@@ -27,6 +27,11 @@ struct ConnectionData {
         ConnectionSettings client_settings;
         ConnectionSettings server_settings;
 };
+struct request_data{
+    std::vector<std::pair<std::string,std::string>> incoming_headers;
+    std::unordered_multimap<std::string,std::string> incoming_data;
+    std::unordered_multimap<std::string,std::string> incoming_files;
+};
 class Http2_Stream
 {
 public:
@@ -40,6 +45,7 @@ public:
 
     Hpack::DynamicTable dynamicTable;
     uint32_t m_stream_id;//流id
+    request_data resquest_info;//请求信息
     ConnectionData m_connectiondata;
     http2_stream_state m_state;//流的状态
     uint32_t m_weight;//流的权重

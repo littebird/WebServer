@@ -1,23 +1,27 @@
 #include "http2server.h"
+#include <arpa/inet.h>
 
 Http2Server::Http2Server()
 {
 
 }
 
-void Http2Server::process(Connection &sock)
+void Http2Server::process(std::shared_ptr<std::vector<char>> buf)
 {
+
+
     Requset req;
     req.timeout=std::chrono::milliseconds(15000);
     ConnectionData conn;
-    send_empty_settings(sock,req.timeout,frameHeader_flag::EMPTY);
+//    send_empty_settings(frameHeader_flag::EMPTY);
+
 
     //to do 如果有错发送goaway帧
 
     conn.client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
     conn.server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
 
-    std::vector<char> buf(conn.server_settings.max_frame_size);
+
     std::unordered_map<uint32_t,Http2_Stream> streams{
       {0,Http2_Stream(0,conn)}
     };
@@ -31,12 +35,12 @@ void Http2Server::process(Connection &sock)
     long read_size = 0;
 
     do{
-        if(getNextHttp2FrameMeta(sock,req.timeout,buf,incframe,read_size)==false)
+        if(getNextHttp2FrameMeta(req.timeout,*buf,incframe,read_size)==false)
         {
             break;
         }
 
-        const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data())+FRAME_HEADER_SIZE;
+        const uint8_t *addr=reinterpret_cast<const uint8_t *>((*buf).data())+FRAME_HEADER_SIZE;
         const uint8_t *end=addr+incframe._frame_hd.length;
 
         if(incframe._frame_hd.stream_id>last_stream_id)
@@ -93,7 +97,7 @@ void Http2Server::process(Connection &sock)
 
                 if(error_code::NO_ERROR==result&&(incframe._frame_hd.flags&frameHeader_flag::ACK)==false)
                 {
-                    send_empty_settings(sock,req.timeout,frameHeader_flag::ACK);
+                    send_empty_settings(frameHeader_flag::ACK);
                 }
                 break;
             }
@@ -120,12 +124,12 @@ void Http2Server::process(Connection &sock)
 
     }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
 
-    goAway(sock,req.timeout,conn,last_stream_id,error_code::NO_ERROR);
+    goAway(req.timeout,conn,last_stream_id,error_code::NO_ERROR);
 
 
 }
 
-void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::milliseconds &timeout,
+std::array<uint8_t,FRAME_HEADER_SIZE> Http2Server::send_empty_settings(
                                       const frameHeader_flag flags)
 {
     constexpr uint32_t frame_size=0;//该帧的长度
@@ -135,6 +139,8 @@ void Http2Server::send_empty_settings(const Connection &sock,const std::chrono::
     constexpr uint32_t stream_id=0;
     addr=set_frame_header(addr,frame_size,frame_type::HTTP2_SETTINGS,flags,stream_id);
     //to do发送数据
+
+    return buf;
 }
 
 uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
@@ -166,14 +172,15 @@ uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
         x.c[2]=c;
     }
 
-    std::copy(x.c,x.c+3,reinterpret_cast<uint8_t *>(addr));//以上是将主机字节顺序转换为网络字节顺序
+    std::copy(x.c,x.c+3,addr);//以上是将主机字节顺序转换为网络字节顺序
     *(addr + 3) = static_cast<const uint8_t>(frametype);
     *(addr + 4) = static_cast<const uint8_t>(frameflag);
     *reinterpret_cast<uint32_t *>(addr+5)=::htonl(streamid);
+
     return (addr+FRAME_HEADER_SIZE);
 }
 
-bool Http2Server::getNextHttp2FrameMeta(const Connection &sock,const std::chrono::milliseconds &timeout,
+bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
                                         std::vector<char> &buf,Frame incframe,
                                         long &read_size)
 {
@@ -271,7 +278,7 @@ error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
     }
 
     Decoder decoder;
-    if(decoder.decode(src,std::size_t(end-src)-padding,incstream.dynamicTable)==false){//解码头部块
+    if(decoder.decode(src,std::size_t(end-src)-padding,incstream)==false){//解码头部块
         return error_code::COMPRESSION_ERROR;
     }
 
@@ -398,7 +405,7 @@ Http2_Stream &Http2Server::getStreamData(std::unordered_map<uint32_t,Http2_Strea
     return streams.emplace(streamId,Http2_Stream(streamId,conn)).first->second;
 }
 
-void Http2Server::goAway(Connection &sock, const std::chrono::milliseconds &timeout,
+void Http2Server::goAway(const std::chrono::milliseconds &timeout,
                          ConnectionData &conn, const uint32_t lastStreamId,
                          const error_code errorcode)
 {

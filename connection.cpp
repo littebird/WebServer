@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <thread>
+#include "http2server.h"
+
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
   : strand_(boost::asio::make_strand(io_context)),
     socket_(new ssl_socket(io_context,context)),
@@ -18,15 +20,15 @@ ssl_socket::lowest_layer_type& Connection::socket()
 void Connection::start()
 {
 
-    (*socket_).async_handshake(boost::asio::ssl::stream_base::server,boost::bind(&Connection::handle_handshake,shared_from_this(),boost::asio::placeholders::error));//ssl握手
+    (*socket_).async_handshake(boost::asio::ssl::stream_base::server,boost::bind(&Connection::handle_handshake_h2,shared_from_this(),boost::asio::placeholders::error));//ssl握手
 
 }
 
 void Connection::handle_handshake(const boost::system::error_code &error)
 {
     //    std::cout<<std::this_thread::get_id()<<std::endl;
-    //    count++;
-    //    std::cout<<count<<std::endl;
+//        count++;
+//        std::cout<<count<<std::endl;
 
 
     set_timeout(5);//设置超时时间
@@ -39,6 +41,30 @@ void Connection::handle_handshake(const boost::system::error_code &error)
                                               shared_from_this(),read_buffer,
                                               boost::asio::placeholders::error,
                                               boost::asio::placeholders::bytes_transferred));
+}
+
+void Connection::handle_handshake_h2(const boost::system::error_code &error)
+{
+    auto self=shared_from_this();
+     auto read_buffer=std::make_shared<std::vector<char>>(MAX_FRAME_SIZE);
+
+
+    Http2Server h2;
+
+    auto buff=h2.send_empty_settings(frameHeader_flag::EMPTY);
+
+
+        socket_->async_write_some(boost::asio::buffer(buff,buff.size()),[this,self](const boost::system::error_code &e,
+                                  std::size_t){
+            std::cout<<"ok"<<std::endl;
+        });
+
+    socket_->async_read_some(boost::asio::buffer(*read_buffer),[&,this,self](const boost::system::error_code &e,
+                            std::size_t bytes_transferred){
+//            std::cout<<(*read_buffer).data()<<std::endl;
+
+            h2.process(read_buffer);
+    });
 }
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer, const boost::system::error_code& error, std::size_t bytes_transferred)

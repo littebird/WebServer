@@ -52,13 +52,11 @@ void Session::run()//线程池实现
                                               boost::bind(&boost::asio::io_context::run, &io_context_)));
 
       threads.push_back(thread);
-//          std::cout<<thread->get_id()<<std::endl;
   }
 
   //等待创建线程结束
   for (auto& th:threads)
       th->join();
-
 
 }
 
@@ -80,7 +78,7 @@ void Session::handle_accept(std::shared_ptr<Connection> new_connection,const boo
     //异步读取请求数据
     new_connection->start();
   }
-  start_accept();
+//  start_accept();
 }
 
 void Session::handle_stop()

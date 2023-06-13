@@ -5,7 +5,7 @@ Decoder::Decoder()
     init();
 }
 
-bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::DynamicTable &dynamicTable)
+bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream& incstream)
 {
     std::size_t cur=0;
 
@@ -59,7 +59,7 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
                 return false;
             }
 
-            dynamicTable.setTableSize(static_cast<uint32_t>(left));
+            incstream.dynamicTable.setTableSize(static_cast<uint32_t>(left));
 
             state=decodeState::OPCODE;
             break;
@@ -84,13 +84,14 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
 
             cur += nread;
 
-            if(!success||left==0||left>getMaxTableIndex(dynamicTable)){
+            if(!success||left==0||left>getMaxTableIndex(incstream.dynamicTable)){
                 return false;
             }
 
             if(opcode==decodeOpcode::INDEXED){
                 //解码后的请求数据添加添加至headers
-                unpackIndexed(left,dynamicTable);
+                incstream.resquest_info.incoming_headers.emplace_back(*unpackIndexed(left,incstream.dynamicTable));
+
 
                 state=decodeState::OPCODE;
             }else{
@@ -179,7 +180,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
 
             if(left==0){
                 //添加至headers
-                opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
+                opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
+                                                :incstream.resquest_info.incoming_headers.emplace_back(unpackHeaderValue(incstream.dynamicTable));
 
                 state=decodeState::OPCODE;
 
@@ -204,7 +206,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
             }
 
             //解码后的请求数据添加至headers
-            opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
+            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
+                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.dynamicTable));
 
             state=decodeState::OPCODE;
 
@@ -221,7 +224,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Hpack::Dynami
             }
 
             //解码后的请求数据添加添加至headers
-            opcode==decodeOpcode::NOT_INDEXED?unpackPairHeader(dynamicTable): unpackHeaderValue(dynamicTable);
+            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
+                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.dynamicTable));
 
             state=decodeState::OPCODE;
 

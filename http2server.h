@@ -5,7 +5,7 @@
 #include<vector>
 #include<unordered_map>
 #include<iostream>
-#include"connection.h"
+#include<chrono>
 #include"frame.h"
 #include"settingsframe.h"
 #include"http2_stream.h"
@@ -24,11 +24,7 @@ enum endianness{
     LITE=1,
     BIGE=2
 };
-struct request_data{
-    std::unordered_multimap<std::string,std::string> incoming_headers;
-    std::unordered_multimap<std::string,std::string> incoming_data;
-    std::unordered_multimap<std::string,std::string> incoming_files;
-};
+
 
 class Http2Server
 {
@@ -37,13 +33,13 @@ public:
 
 
 
-    void process(Connection &sock);//http2处理的所有过程
-    static void send_empty_settings(const Connection &sock,const std::chrono::milliseconds &timeout,
+    void process(std::shared_ptr<std::vector<char>> buf);//http2处理的所有过程
+    static std::array<uint8_t,FRAME_HEADER_SIZE> send_empty_settings(
                                     const frameHeader_flag flags);//发送空的settings帧
     static uint8_t *set_frame_header(uint8_t *addr,const uint32_t framesize,
                                      const frame_type frametype,const frameHeader_flag frameflag,
                                      const uint32_t streamid);
-    static bool getNextHttp2FrameMeta(const Connection &sock,const std::chrono::milliseconds &timeout,
+    static bool getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
                                       std::vector<char> &buf,Frame incframe,
                                       long &read_size);
     static error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
@@ -52,7 +48,7 @@ public:
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
-    static void goAway(Connection &sock,const std::chrono::milliseconds &timeout,
+    static void goAway(const std::chrono::milliseconds &timeout,
                        ConnectionData &conn,const uint32_t lastStreamId,
                        const error_code errorcode);
 private:
