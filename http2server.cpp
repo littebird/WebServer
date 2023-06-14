@@ -6,7 +6,7 @@ Http2Server::Http2Server()
 
 }
 
-void Http2Server::process(std::shared_ptr<std::vector<char>> buf)
+void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > &socket)
 {
 
 
@@ -16,11 +16,15 @@ void Http2Server::process(std::shared_ptr<std::vector<char>> buf)
 //    send_empty_settings(frameHeader_flag::EMPTY);
 
 
-    //to do 如果有错发送goaway帧
+    if(!getClientPreface(*socket)){
+        //to do 如果有错发送goaway帧
+        return;
+    }
 
     conn.client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
     conn.server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
 
+    std::vector<char> buf(conn.server_settings.max_frame_size);
 
     std::unordered_map<uint32_t,Http2_Stream> streams{
       {0,Http2_Stream(0,conn)}
@@ -35,12 +39,12 @@ void Http2Server::process(std::shared_ptr<std::vector<char>> buf)
     long read_size = 0;
 
     do{
-        if(getNextHttp2FrameMeta(req.timeout,*buf,incframe,read_size)==false)
+        if(getNextHttp2FrameMeta(req.timeout,buf,incframe,read_size)==false)
         {
             break;
         }
 
-        const uint8_t *addr=reinterpret_cast<const uint8_t *>((*buf).data())+FRAME_HEADER_SIZE;
+        const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data())+FRAME_HEADER_SIZE;
         const uint8_t *end=addr+incframe._frame_hd.length;
 
         if(incframe._frame_hd.stream_id>last_stream_id)
@@ -180,6 +184,44 @@ uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
     return (addr+FRAME_HEADER_SIZE);
 }
 
+bool Http2Server::getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket)
+{
+    std::array<uint8_t, 24> buf;
+
+    long read_size;
+
+
+//    socket.async_read_some(boost::asio::buffer(buf),[&](const boost::system::error_code &e,
+//                            std::size_t bytes_transferred){
+//        std::cout<<buf.data()<<std::endl;
+//        read_size=bytes_transferred;
+//    });
+
+    socket.read_some(boost::asio::buffer(buf));
+    std::cout<<buf.data()<<std::endl;
+    read_size=buf.size();
+
+
+    if (buf.size() != read_size) {
+        return false;
+    }
+
+
+
+    static constexpr char client_preface_data[] = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
+
+    const uint64_t *left = reinterpret_cast<const uint64_t *>(client_preface_data);
+    const uint64_t *right = reinterpret_cast<const uint64_t *>(buf.data() );
+
+    uint64_t compare = 0;
+
+    compare |= left[0] ^ right[0];
+    compare |= left[1] ^ right[1];
+    compare |= left[2] ^ right[2];
+
+    return 0 == compare;
+}
+
 bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
                                         std::vector<char> &buf,Frame incframe,
                                         long &read_size)
@@ -191,6 +233,7 @@ bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout
         {
             read_size=0;
         }
+
         //to do 读数据
 
         if(read_size<long(FRAME_HEADER_SIZE)){
@@ -208,6 +251,7 @@ bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout
     incframe._frame_hd.type=static_cast<frame_type>(*(addr + 3) );
     incframe._frame_hd.flags=static_cast<frameHeader_flag>(*(addr + 4) );
     incframe._frame_hd.stream_id = ::ntohl(*reinterpret_cast<const uint32_t *>(addr + 5) );
+
 
     return true;
 }

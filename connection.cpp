@@ -45,27 +45,21 @@ void Connection::handle_handshake(const boost::system::error_code &error)
 
 void Connection::handle_handshake_h2(const boost::system::error_code &error)
 {
-    auto self=shared_from_this();
-     auto read_buffer=std::make_shared<std::vector<char>>(MAX_FRAME_SIZE);
+//    auto self=shared_from_this();
 
+//    auto read_buffer=std::make_shared<std::vector<char>>(24);
 
-    Http2Server h2;
+    std::shared_ptr<Http2Server> h2;
 
-    auto buff=h2.send_empty_settings(frameHeader_flag::EMPTY);
+    h2->process(socket_);
 
-
-        socket_->async_write_some(boost::asio::buffer(buff,buff.size()),[this,self](const boost::system::error_code &e,
-                                  std::size_t){
-            std::cout<<"ok"<<std::endl;
-        });
-
-    socket_->async_read_some(boost::asio::buffer(*read_buffer),[&,this,self](const boost::system::error_code &e,
-                            std::size_t bytes_transferred){
+//    socket_->async_read_some(boost::asio::buffer(*read_buffer),[&,this,self](const boost::system::error_code &e,
+//                            std::size_t bytes_transferred){
 //            std::cout<<(*read_buffer).data()<<std::endl;
-
-            h2.process(read_buffer);
-    });
+//    });
 }
+
+
 
 void Connection::handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer, const boost::system::error_code& error, std::size_t bytes_transferred)
 {

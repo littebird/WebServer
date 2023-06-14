@@ -4,7 +4,8 @@
 #include<string.h>
 #include<vector>
 #include<unordered_map>
-#include<iostream>
+#include<boost/asio/ssl.hpp>
+#include<boost/asio.hpp>
 #include<chrono>
 #include"frame.h"
 #include"settingsframe.h"
@@ -33,12 +34,14 @@ public:
 
 
 
-    void process(std::shared_ptr<std::vector<char>> buf);//http2处理的所有过程
+    void process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>& socket);//http2处理的所有过程
     static std::array<uint8_t,FRAME_HEADER_SIZE> send_empty_settings(
                                     const frameHeader_flag flags);//发送空的settings帧
     static uint8_t *set_frame_header(uint8_t *addr,const uint32_t framesize,
                                      const frame_type frametype,const frameHeader_flag frameflag,
                                      const uint32_t streamid);
+
+    static bool getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket);
     static bool getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
                                       std::vector<char> &buf,Frame incframe,
                                       long &read_size);

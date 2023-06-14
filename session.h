@@ -12,6 +12,7 @@
 #include <thread>
 #include <boost/bind.hpp>
 #include "connection.h"
+#include "tls.h"
 
 class Session: private boost::noncopyable//不可拷贝类
 {
@@ -23,6 +24,10 @@ private:
     void start_accept();//异步等待连接
     void handle_accept(std::shared_ptr<Connection> new_connection,const boost::system::error_code& e);//持续等待连接，进行递归调用
     void handle_stop();//关闭io
+
+    static int alpn_select_proto_cb(SSL *ssl, const unsigned char **out,
+                             unsigned char *outlen, const unsigned char *in,
+                             unsigned int inlen, void *arg);
     std::string get_password()const{
         return "123456";//私钥密码
     }

@@ -27,6 +27,7 @@ Session::Session(const std::string& address, const std::string& port)
     context_.set_password_callback(boost::bind(&Session::get_password,this));
     context_.use_certificate_chain_file("/root/cert.pem");//证书文件
     context_.use_private_key_file("/root/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
+    SSL_CTX_set_alpn_select_cb(context_.native_handle(),alpn_select_proto_cb,nullptr);
 
 
     boost::asio::ip::tcp::resolver resolver(io_context_);
@@ -78,13 +79,21 @@ void Session::handle_accept(std::shared_ptr<Connection> new_connection,const boo
     //异步读取请求数据
     new_connection->start();
   }
-//  start_accept();
+  start_accept();
 }
 
 void Session::handle_stop()
 {
       io_context_.stop();
 
+}
+
+int Session::alpn_select_proto_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
+{//ALPN协商选择h2协议回调函数
+    if (!tls::select_h2(out, outlen, in, inlen)) {
+        return SSL_TLSEXT_ERR_NOACK;
+      }
+      return SSL_TLSEXT_ERR_OK;
 }
 
 std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& io_ctx,boost::asio::ssl::context& ctx)
