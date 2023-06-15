@@ -45,7 +45,7 @@ void Session::run()//线程池实现
 
   std::vector<std::shared_ptr<std::thread> > threads;//线程池
   unsigned const thread_count=std::thread::hardware_concurrency();//硬件所支持的并发线程数目
-  for (unsigned i = 0; i <thread_count ; ++i)
+  for (unsigned i = 0; i <1 ; ++i)
   {
       //创建多个线程共享一个io_context,并在每个线程执行io_context.run()，执行io事件队列处理
       std::shared_ptr<std::thread> thread(new std::thread(

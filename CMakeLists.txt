@@ -64,7 +64,7 @@ target_compile_definitions(WebServer
 
 #target_link_directories( WebServer PRIVATE /usr/lib )
 
-target_link_libraries( WebServer PRIVATE uring ssl crypto)
+target_link_libraries( WebServer PRIVATE uring ssl crypto gnutls)
 
 #set_target_properties( WebServer PROPERTIES
             #CXX_STANDARD 20

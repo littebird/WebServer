@@ -8,11 +8,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio/ssl.hpp>
+#include <gnutls/gnutls.h>
 #include "log/access_log.h"
 #include "log/log_queue.h"
 #include "log/logs.h"
 #include "http/httprequest.h"
 #include "http/httpresponse.h"
+#include "http2server.h"
 
 using ssl_socket=boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 
@@ -24,10 +26,13 @@ public:
     explicit Connection(boost::asio::io_context& io_context,boost::asio::ssl::context& context);
     ssl_socket::lowest_layer_type& socket();//给外部提供ssl低层套接字的引用对象接口
     void start();//读取请求内容
-    void start_h2();
-private:
-    void handle_handshake(const boost::system::error_code& error);//ssl握手后回调
 
+private:
+    void mm(std::array<uint8_t,FRAME_HEADER_SIZE+0> &buf,const boost::system::error_code& error);
+    void start_h2(const boost::system::error_code& error);
+    void handle_handshake(const boost::system::error_code& error);//ssl握手后回调
+    void handle_read_h2(Http2Server& h2,std::shared_ptr<std::vector<char>> &read_buffer,const boost::system::error_code& e,std::size_t bytes_transferred);
+    void write_h2(std::shared_ptr<std::vector<char> > &read_buffer, const boost::system::error_code& error);
     void handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& e,std::size_t bytes_transferred);
     void handle_write(std::shared_ptr<HttpResponse> response,const boost::system::error_code& e);
     void close();//关闭连接

@@ -29,7 +29,7 @@ enum frame_type: uint8_t{//帧类型
     HTTP2_GOAWAY = 0x07,
     HTTP2_CONTINUATION = 0x09,
 };
-enum error_code{//rst_streamz帧和goaway帧的状态码
+enum Error_code{//rst_streamz帧和goaway帧的状态码
     NO_ERROR = 0x00,
     PROTOCOL_ERROR = 0x01,
     INTERNAL_ERROR = 0x02,

@@ -1,5 +1,5 @@
 #include "connection.h"
-
+#include <gnutls/gnutls.h>
 #include <iostream>
 #include <thread>
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
@@ -18,8 +18,13 @@ ssl_socket::lowest_layer_type& Connection::socket()
 void Connection::start()
 {
 
-    (*socket_).async_handshake(boost::asio::ssl::stream_base::server,boost::bind(&Connection::handle_handshake,shared_from_this(),boost::asio::placeholders::error));//ssl握手
+    (*socket_).async_handshake(boost::asio::ssl::stream_base::server,boost::bind(&Connection::start_h2,shared_from_this(),boost::asio::placeholders::error));//ssl握手
 
+}
+
+void Connection::mm(std::array<uint8_t,FRAME_HEADER_SIZE+0> &buf,const boost::system::error_code &error)
+{
+    std::cout<<buf.data()<<123<<std::endl;
 }
 
 void Connection::handle_handshake(const boost::system::error_code &error)
@@ -41,9 +46,52 @@ void Connection::handle_handshake(const boost::system::error_code &error)
                                               boost::asio::placeholders::bytes_transferred));
 }
 
-void Connection::start_h2()
+void Connection::handle_read_h2(Http2Server &h2, std::shared_ptr<std::vector<char> > &read_buffer, const boost::system::error_code &e, std::size_t bytes_transferred)
 {
 
+//    std::string full_path{"/root/hpack"};
+//    std::ofstream ofs(full_path.c_str(),std::ios::out | std::ios::binary);//以写，二进制方式打开文件
+//    for(auto &ch:(*read_buffer)){
+//        ofs<<ch;
+//    }
+     std::cout<<(*read_buffer).data()<<std::endl;
+//    std::cout<<std::endl;
+//    std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> buf;
+//    buf=h2.process(read_buffer);
+//    std::cout<<buf.data()<<std::endl;
+//     socket_->async_write_some(boost::asio::buffer(&buf,17),
+//                               boost::bind(&Connection::write_h2,
+//                                           shared_from_this(),
+//                                           read_buffer,
+//                                           boost::asio::placeholders::error)
+//                               );
+}
+
+void Connection::write_h2(std::shared_ptr<std::vector<char> > &read_buffer, const boost::system::error_code &error)
+{
+
+}
+
+void Connection::start_h2(const boost::system::error_code& error)
+{
+    Requset req;
+    req.timeout=std::chrono::milliseconds(15000);
+    ConnectionData conn;
+    Http2Server h2;
+
+    std::array<uint8_t,FRAME_HEADER_SIZE> buf;
+    buf=h2.send_empty_settings(req.timeout,frameHeader_flag::EMPTY);
+    boost::asio::async_write(*socket_,boost::asio::buffer(&buf,buf.size()),
+                             boost::bind(&Connection::mm,
+                                         shared_from_this(),buf,
+                                         boost::asio::placeholders::error));
+
+    auto read_buffer=std::make_shared<std::vector<char>>(MAX_FRAME_SIZE);
+    socket_->async_read_some(boost::asio::buffer(*read_buffer),
+                                  boost::bind(&Connection::handle_read_h2,
+                                              shared_from_this(),h2,read_buffer,
+                                              boost::asio::placeholders::error,
+                                              boost::asio::placeholders::bytes_transferred));
 }
 
 
@@ -103,11 +151,14 @@ void Connection::handle_write(std::shared_ptr<HttpResponse> response,const boost
 {
     if (!e)
       {
-        if(response->isKeepAlive()){//是否长连接
-            handle_handshake(e);
+        if(response)
+        {
+            if(response->isKeepAlive()){//是否长连接
+                handle_handshake(e);
 
-        }else close();
-        //to do process
+            }else close();
+            //to do process
+        }
     }
 
 }

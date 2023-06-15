@@ -1,0 +1,2 @@
+127.0.0.1 - - [Mon Jun 12 19:24:41 2023] " GET /index.html 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:101.0) Gecko/20100101 Firefox/101.0
+127.0.0.1 - - [Mon Jun 12 19:24:41 2023] " GET /1.png 1.1" OK 0 - Mozilla/5.0 (X11; Linux x86_64; rv:101.0) Gecko/20100101 Firefox/101.0
