@@ -55,7 +55,6 @@ void Connection::handle_handshake_h2(const boost::system::error_code &error)
 //    auto read_buffer=std::make_shared<std::vector<char>>(24);
 
     std::shared_ptr<Http2Server> h2;
-
     h2->process(socket_);
 
 //    socket_->async_read_some(boost::asio::buffer(*read_buffer),[&,this,self](const boost::system::error_code &e,

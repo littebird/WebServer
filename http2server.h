@@ -40,8 +40,8 @@ public:
                                      const uint32_t streamid);
 
     static bool getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket);
-    static bool getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
-                                      std::vector<char> &buf,Frame incframe,
+    static bool getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
+                                      std::vector<char> &buf,Frame &incframe,
                                       long &read_size);
     static Error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
