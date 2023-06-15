@@ -22,6 +22,7 @@ target_sources( WebServer PRIVATE
                 http/v2/encoder.h
                 http/v2/decoder.cpp
                 http/v2/decoder.h
+                tls.h   tls.cpp
                 http2server.cpp http2server.h
                 http2_stream.h http2_stream.cpp
                 headerframe.h headerframe.cpp

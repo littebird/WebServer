@@ -27,6 +27,7 @@ Session::Session(const std::string& address, const std::string& port)
     context_.set_password_callback(boost::bind(&Session::get_password,this));
     context_.use_certificate_chain_file("/root/cert.pem");//证书文件
     context_.use_private_key_file("/root/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
+    SSL_CTX_set_alpn_select_cb(context_.native_handle(),alpn_select_proto_cb,nullptr);
 
 
     boost::asio::ip::tcp::resolver resolver(io_context_);
@@ -52,13 +53,11 @@ void Session::run()//线程池实现
                                               boost::bind(&boost::asio::io_context::run, &io_context_)));
 
       threads.push_back(thread);
-//          std::cout<<thread->get_id()<<std::endl;
   }
 
   //等待创建线程结束
   for (auto& th:threads)
       th->join();
-
 
 }
 
@@ -87,6 +86,14 @@ void Session::handle_stop()
 {
       io_context_.stop();
 
+}
+
+int Session::alpn_select_proto_cb(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
+{//ALPN协商选择h2协议回调函数
+    if (!tls::select_h2(out, outlen, in, inlen)) {
+        return SSL_TLSEXT_ERR_NOACK;
+      }
+      return SSL_TLSEXT_ERR_OK;
 }
 
 std::shared_ptr<Connection> Session::create_connection(boost::asio::io_context& io_ctx,boost::asio::ssl::context& ctx)

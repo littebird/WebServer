@@ -5,7 +5,7 @@
 #include "hpack.cpp"
 #include <tuple>
 #include <numeric>
-
+#include "../../http2_stream.h"
 
 enum decodeOpcode{//解码是否存在索引
     NONE,
@@ -33,7 +33,7 @@ class Decoder
 public:
     Decoder();
 
-    bool decode(const uint8_t *src,const std::size_t srclen,Hpack::DynamicTable& dynamicTable );//
+    bool decode(const uint8_t *src,const std::size_t srclen,Http2_Stream& incstream);//
 
     void init(){
         _buf.clear();

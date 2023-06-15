@@ -48,7 +48,7 @@ void  test_hpack(){
         str+=ch;
     }
 
-    Hpack::DynamicTable responseTable;
+    Http2_Stream stream;
 
 
     const uint8_t *ustrs=reinterpret_cast<const uint8_t*>(str.data());
@@ -56,7 +56,7 @@ void  test_hpack(){
 
     Decoder decode;
 
-    if(!decode.decode(ustrs,str.length(),responseTable))
+    if(!decode.decode(ustrs,str.length(),stream))
         std::cout<<"false"<<std::endl;
 
 //    std::cout<<responseTable[0].second<<"\n";

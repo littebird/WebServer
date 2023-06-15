@@ -1,26 +1,31 @@
 #include "http2server.h"
+#include <arpa/inet.h>
 
 Http2Server::Http2Server()
 {
 
 }
 
-std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> Http2Server::process(std::shared_ptr<std::vector<char>> &bufs)
+void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > &socket)
 {
+
+
     Requset req;
     req.timeout=std::chrono::milliseconds(15000);
     ConnectionData conn;
-    send_empty_settings(req.timeout,frameHeader_flag::EMPTY);
+//    send_empty_settings(frameHeader_flag::EMPTY);
 
-    //to do 如果有错发送goaway帧
+
+    if(!getClientPreface(*socket)){
+        //to do 如果有错发送goaway帧
+        return;
+    }
 
     conn.client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
     conn.server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
 
-//    std::vector<char> buf(conn.server_settings.max_frame_size);
-    //buf=*bufs;
-//    std::copy(bufs.begin(),bufs.end(),buf.begin());
-//    std::cout<< &bufs<<std::endl;
+    std::vector<char> buf(conn.server_settings.max_frame_size);
+
     std::unordered_map<uint32_t,Http2_Stream> streams{
       {0,Http2_Stream(0,conn)}
     };
@@ -34,7 +39,7 @@ std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> Http2Server::proces
     long read_size = 0;
 
     do{
-        if(getNextHttp2FrameMeta(req.timeout,*bufs,incframe,read_size)==false)
+        if(getNextHttp2FrameMeta(req.timeout,buf,incframe,read_size)==false)
         {
 //            std::cout<<123<<std::endl;
             break;
@@ -97,7 +102,7 @@ std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> Http2Server::proces
 
                 if(Error_code::NO_ERROR==result&&(incframe._frame_hd.flags&frameHeader_flag::ACK)==false)
                 {
-                    //send_empty_settings(req.timeout,frameHeader_flag::ACK);
+                    send_empty_settings(frameHeader_flag::ACK);
                 }
                 break;
             }
@@ -124,12 +129,12 @@ std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> Http2Server::proces
 
     }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
 
-    return goAway(req.timeout,conn,last_stream_id,Error_code::NO_ERROR);
+    goAway(req.timeout,conn,last_stream_id,error_code::NO_ERROR);
 
 
 }
 
-std::array<uint8_t,FRAME_HEADER_SIZE> Http2Server::send_empty_settings(const std::chrono::milliseconds &timeout,
+std::array<uint8_t,FRAME_HEADER_SIZE> Http2Server::send_empty_settings(
                                       const frameHeader_flag flags)
 {
     constexpr uint32_t frame_size=0;//该帧的长度
@@ -171,13 +176,51 @@ uint8_t *Http2Server::set_frame_header(uint8_t *addr, const uint32_t framesize,
         x.c[2]=c;
     }
 
-    std::copy(x.c,x.c+3,reinterpret_cast<uint8_t *>(addr));//以上是将主机字节顺序转换为网络字节顺序
+    std::copy(x.c,x.c+3,addr);//以上是将主机字节顺序转换为网络字节顺序
     *(addr + 3) = static_cast<const uint8_t>(frametype);
     *(addr + 4) = static_cast<const uint8_t>(frameflag);
     *reinterpret_cast<uint32_t *>(addr+5)=::htonl(streamid);
+
     return (addr+FRAME_HEADER_SIZE);
 }
 
+bool Http2Server::getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket)
+{
+    std::array<uint8_t, 24> buf;
+
+    long read_size;
+
+
+//    socket.async_read_some(boost::asio::buffer(buf),[&](const boost::system::error_code &e,
+//                            std::size_t bytes_transferred){
+//        std::cout<<buf.data()<<std::endl;
+//        read_size=bytes_transferred;
+//    });
+
+    socket.read_some(boost::asio::buffer(buf));
+    std::cout<<buf.data()<<std::endl;
+    read_size=buf.size();
+
+
+    if (buf.size() != read_size) {
+        return false;
+    }
+
+
+
+    static constexpr char client_preface_data[] = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
+
+    const uint64_t *left = reinterpret_cast<const uint64_t *>(client_preface_data);
+    const uint64_t *right = reinterpret_cast<const uint64_t *>(buf.data() );
+
+    uint64_t compare = 0;
+
+    compare |= left[0] ^ right[0];
+    compare |= left[1] ^ right[1];
+    compare |= left[2] ^ right[2];
+
+    return 0 == compare;
+}
 bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout,
                                         std::vector<char> &buf,Frame incframe,
                                         long &read_size)
@@ -189,6 +232,7 @@ bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout
         {
             read_size=0;
         }
+
         //to do 读数据
         read_size=buf.size();
         std::cout<<read_size<<std::endl;
@@ -207,6 +251,7 @@ bool Http2Server::getNextHttp2FrameMeta(const std::chrono::milliseconds &timeout
     incframe._frame_hd.type=static_cast<frame_type>(*(addr + 3) );
     incframe._frame_hd.flags=static_cast<frameHeader_flag>(*(addr + 4) );
     incframe._frame_hd.stream_id = ::ntohl(*reinterpret_cast<const uint32_t *>(addr + 5) );
+
 
     return true;
 }
@@ -277,8 +322,8 @@ Error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
     }
 
     Decoder decoder;
-    if(decoder.decode(src,std::size_t(end-src)-padding,incstream.dynamicTable)==false){//解码头部块
-        return Error_code::COMPRESSION_ERROR;
+    if(decoder.decode(src,std::size_t(end-src)-padding,incstream)==false){//解码头部块
+        return error_code::COMPRESSION_ERROR;
     }
 
     return Error_code::NO_ERROR;
@@ -404,7 +449,7 @@ Http2_Stream &Http2Server::getStreamData(std::unordered_map<uint32_t,Http2_Strea
     return streams.emplace(streamId,Http2_Stream(streamId,conn)).first->second;
 }
 
-std::array<uint8_t,FRAME_HEADER_SIZE + sizeof(uint32_t) * 2> Http2Server::goAway(const std::chrono::milliseconds &timeout,
+void Http2Server::goAway(const std::chrono::milliseconds &timeout,
                          ConnectionData &conn, const uint32_t lastStreamId,
                          const Error_code errorcode)
 {
