@@ -10,9 +10,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
 {
 
     Requset req;
-    req.timeout=std::chrono::milliseconds(15000);
     ConnectionData conn;
-//    send_empty_settings(frameHeader_flag::EMPTY);
 
     if(!getClientPreface(*socket)){
 
@@ -24,13 +22,17 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
 
     std::vector<char> buf(MAX_FRAME_SIZE);
 
+
     std::unordered_map<uint32_t,Http2_Stream> streams{
       {0,Http2_Stream(0,conn)}
     };
     Http2_Stream &primary=streams.find(0)->second;
-    //this->stream=primary;
+
+//    *stream = streams.find(0)->second;
     std::size_t streams_process_count = 0;
     uint32_t last_stream_id = 0;
+
+
 
     Frame incframe;
     long read_size = 0;
@@ -40,14 +42,18 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             std::cout<<2<<std::endl;
             break;
         }
-        const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data()+FRAME_HEADER_SIZE);
+
+        const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data())+FRAME_HEADER_SIZE;
         const uint8_t *end=addr+incframe._frame_hd.length;
+
+
 
         if(incframe._frame_hd.stream_id>last_stream_id)
         {
             last_stream_id=incframe._frame_hd.stream_id;
         }
         Http2_Stream &stream=getStreamData(streams,incframe._frame_hd.stream_id,conn);
+
         if(stream.m_state==http2_stream_state::STREAM_CLOSE)
         {
             //rststream;
@@ -62,7 +68,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         }
 
         Error_code result=Error_code::NO_ERROR;
-        std::cout<<(uint16_t)stream.m_frame_type<<std::endl;
+
         switch(stream.m_frame_type)
         {
             case frame_type::HTTP2_DATA:
@@ -78,10 +84,11 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             case frame_type::HTTP2_HEADERS:
             {
                 result=parseHttp2Headers(incframe,stream,addr,end);
+
                 if(incframe._frame_hd.flags&&frameHeader_flag::END_HEADERS)
                 {
 
-
+                    std::cout<<"end_headers"<<std::endl;
                 }
                 break;
             }
@@ -93,10 +100,11 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             case frame_type::HTTP2_SETTINGS:
             {
                 result=parseHttp2Settings(incframe,stream,addr,end);
-                std::cout<<111<<std::endl;
+
                 if(Error_code::NO_ERROR==result&&(incframe._frame_hd.flags&frameHeader_flag::ACK)==false)
                 {
                     send_empty_settings(frameHeader_flag::ACK);
+
                 }
                 break;
             }
@@ -181,7 +189,7 @@ bool Http2Server::getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp
 {
     std::array<uint8_t, 24> buf;
 
-    long read_size;
+
 
 
 //    socket.async_read_some(boost::asio::buffer(buf),[&](const boost::system::error_code &e,
@@ -190,9 +198,7 @@ bool Http2Server::getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp
 //        read_size=bytes_transferred;
 //    });
 
-    socket.read_some(boost::asio::buffer(buf));
-    read_size=buf.size();
-
+    const long read_size=socket.read_some(boost::asio::buffer(buf));
 
     if (buf.size() != read_size) {
         return false;
@@ -211,10 +217,11 @@ bool Http2Server::getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp
     compare |= left[1] ^ right[1];
     compare |= left[2] ^ right[2];
 
-    return 0 == compare;
+    return compare==0;
 }
-bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
-                                        std::vector<char> &buf,Frame &incframe,
+
+bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket,
+                                        std::vector<char> &buf,Frame& incframe,
                                         long &read_size)
 {
     const long length=long(incframe._frame_hd.length+FRAME_HEADER_SIZE);
@@ -225,7 +232,10 @@ bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip
             read_size=0;
         }
 
+
         //to do 读数据
+        read_size=socket.read_some(boost::asio::buffer(buf));
+
 
         read_size=socket.read_some(boost::asio::buffer(buf));
         if(read_size<long(FRAME_HEADER_SIZE)){
@@ -291,6 +301,8 @@ Error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
 {//解析header帧
     incstream.m_state=(incframe._frame_hd.flags&frameHeader_flag::END_STREAM)?http2_stream_state::STREAM_LOCAL_HALF_CLOSED
                                                                             :http2_stream_state::STREAM_OPEN;
+
+
     uint8_t padding = 0;
     if(incframe._frame_hd.flags&frameHeader_flag::PADDED){//帧首部带有padded标记
         padding=*src;
@@ -329,12 +341,16 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
         return Error_code::PROTOCOL_ERROR;
     }
 
+
+
     if(incframe._frame_hd.length%(sizeof(uint16_t)+sizeof(uint32_t))){//检查长度
         return Error_code::FRAME_SIZE_ERROR;
     }
 
+
     if(incstream.m_state!=http2_stream_state::STREAM_OPEN){
         incstream.m_state=http2_stream_state::STREAM_OPEN;
+
     }
 
     ConnectionSettings &settings=incstream.m_connectiondata.client_settings;
@@ -346,11 +362,15 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
         src+=sizeof(uint16_t);
 
-        const uint32_t value=::htonl(*reinterpret_cast<const uint32_t*>(src));
+        const uint32_t value=::ntohl(*reinterpret_cast<const uint32_t*>(src));
+
+        src+=sizeof(uint32_t);
 
         switch(setting){
         case settings_id::SETTINGS_HEADER_TABLE_SIZE :{//设置header表大小
             settings.header_table_size=value;
+
+
             break;
         }
         case settings_id::SETTINGS_ENABLE_PUSH:{//推送
@@ -371,6 +391,7 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
         case settings_id::SETTINGS_INITIAL_WINDOW_SIZE:{//流量控制
             if(value>=uint32_t(1)<<31){
                 return Error_code::FLOW_CONTROL_ERROR;
+
             }
 
             settings.initial_window_size=value;
@@ -379,7 +400,9 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
         }
         case settings_id::SETTINGS_MAX_FRAME_SIZE:{//设置帧载荷的最大大小
             if(value<(1<<14)||value>=(1<<24)){
+
                 return Error_code::PROTOCOL_ERROR;
+
             }
 
             settings.max_frame_size=value;
