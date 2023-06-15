@@ -27,7 +27,7 @@ Session::Session(const std::string& address, const std::string& port)
     context_.set_password_callback(boost::bind(&Session::get_password,this));
     context_.use_certificate_chain_file("/root/cert.pem");//证书文件
     context_.use_private_key_file("/root/privkey.pem",boost::asio::ssl::context::pem);//私钥文件
-    SSL_CTX_set_alpn_select_cb(context_.native_handle(),alpn_select_proto_cb,nullptr);
+    SSL_CTX_set_alpn_select_cb(context_.native_handle(),alpn_select_proto_cb,nullptr);//alpn协议协商选择proto
 
 
     boost::asio::ip::tcp::resolver resolver(io_context_);

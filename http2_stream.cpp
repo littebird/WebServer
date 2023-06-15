@@ -7,7 +7,8 @@ Http2_Stream::Http2_Stream()
 }
 
 Http2_Stream::Http2_Stream(uint32_t streamid,const ConnectionData &conn)
-    :m_stream_id(streamid),
+    :m_state(STREAM_IDLE),
+    m_stream_id(streamid),
      m_connectiondata(conn)
 {
 
