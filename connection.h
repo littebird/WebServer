@@ -8,11 +8,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio/ssl.hpp>
+#include <gnutls/gnutls.h>
 #include "log/access_log.h"
 #include "log/log_queue.h"
 #include "log/logs.h"
 #include "http/httprequest.h"
 #include "http/httpresponse.h"
+#include "http2server.h"
 
 using ssl_socket=boost::asio::ssl::stream<boost::asio::ip::tcp::socket>;
 
@@ -26,9 +28,9 @@ public:
     void start();//开始处理连接
 
 private:
+    void start_h2(const boost::system::error_code& error);
     void handle_handshake(const boost::system::error_code& error);//ssl握手后回调
     void handle_handshake_h2(const boost::system::error_code& error);
-
     void handle_read(std::shared_ptr<boost::asio::streambuf> read_buffer,const boost::system::error_code& e,std::size_t bytes_transferred);
     void handle_write(std::shared_ptr<HttpResponse> response,const boost::system::error_code& e);
     void close();//关闭连接

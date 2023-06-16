@@ -3,7 +3,7 @@
 
 #include<string>
 
-enum frameHeader_flag{//帧首部标志
+enum frameHeader_flag: uint8_t{//帧首部标志
     EMPTY=0x0,
     ACK=0x01,
     END_STREAM=0x01,

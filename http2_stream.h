@@ -43,7 +43,8 @@ public:
     void set_weight(uint32_t weight);//设置权重
     uint32_t get_stream_id();//返回流id
 
-    Hpack::DynamicTable dynamicTable;
+    Hpack::DynamicTable decoding_dynamic_table;
+    Hpack::DynamicTable encoding_dynamic_table;
     uint32_t m_stream_id;//流id
     request_data resquest_info;//请求信息
     ConnectionData m_connectiondata;

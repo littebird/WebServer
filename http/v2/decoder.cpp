@@ -7,6 +7,8 @@ Decoder::Decoder()
 
 bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream& incstream)
 {
+    init();
+
     std::size_t cur=0;
 
 //    std::cout<<srclen<<"\n";
@@ -59,7 +61,7 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream&
                 return false;
             }
 
-            incstream.dynamicTable.setTableSize(static_cast<uint32_t>(left));
+            incstream.decoding_dynamic_table.setTableSize(static_cast<uint32_t>(left));
 
             state=decodeState::OPCODE;
             break;
@@ -84,13 +86,13 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream&
 
             cur += nread;
 
-            if(!success||left==0||left>getMaxTableIndex(incstream.dynamicTable)){
+            if(!success||left==0||left>getMaxTableIndex(incstream.decoding_dynamic_table)){
                 return false;
             }
 
             if(opcode==decodeOpcode::INDEXED){
                 //解码后的请求数据添加添加至headers
-                incstream.resquest_info.incoming_headers.emplace_back(*unpackIndexed(left,incstream.dynamicTable));
+                incstream.resquest_info.incoming_headers.emplace_back(*unpackIndexed(left,incstream.decoding_dynamic_table));
 
 
                 state=decodeState::OPCODE;
@@ -180,8 +182,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream&
 
             if(left==0){
                 //添加至headers
-                opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
-                                                :incstream.resquest_info.incoming_headers.emplace_back(unpackHeaderValue(incstream.dynamicTable));
+                opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.decoding_dynamic_table))
+                                                :incstream.resquest_info.incoming_headers.emplace_back(unpackHeaderValue(incstream.decoding_dynamic_table));
 
                 state=decodeState::OPCODE;
 
@@ -206,8 +208,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream&
             }
 
             //解码后的请求数据添加至headers
-            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
-                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.dynamicTable));
+            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.decoding_dynamic_table))
+                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.decoding_dynamic_table));
 
             state=decodeState::OPCODE;
 
@@ -224,8 +226,8 @@ bool Decoder::decode(const uint8_t *src, const std::size_t srclen, Http2_Stream&
             }
 
             //解码后的请求数据添加添加至headers
-            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.dynamicTable))
-                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.dynamicTable));
+            opcode==decodeOpcode::NOT_INDEXED?incstream.resquest_info.incoming_headers.emplace_back(unpackPairHeader(incstream.decoding_dynamic_table))
+                                            :incstream.resquest_info.incoming_headers.emplace_back( unpackHeaderValue(incstream.decoding_dynamic_table));
 
             state=decodeState::OPCODE;
 

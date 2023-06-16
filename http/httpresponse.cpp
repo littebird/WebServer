@@ -53,6 +53,7 @@ void HttpResponse::addBody()
 }
 void HttpResponse::readFile()
 {
+
     std::string full_path=doc_root+m_path;
     std::fstream ifs(full_path.c_str(),std::ios::in | std::ios::binary);//以读，二进制方式打开文件
     if(!ifs){
@@ -62,7 +63,7 @@ void HttpResponse::readFile()
 
         readFile();
     }
-    char buf[512];
+    char buf[512*1024];
     while(ifs.read(buf,sizeof (buf)).gcount()>0){
         m_response_body.append(buf,ifs.gcount());
     }
@@ -86,11 +87,12 @@ void HttpResponse::buildH2Response(std::vector<std::pair<std::string,std::string
 
     m_status_code=CODE_STATUS::value::ok;
     readFile();
+    headers.emplace_back(":status",std::to_string(m_status_code));
     headers.emplace_back("server","webserver");
     headers.emplace_back("date",curTime());
     headers.emplace_back("content-type",get_type(m_path));
     headers.emplace_back("content-length",std::to_string(m_response_body.size()));
-    headers.emplace_back(":status",std::to_string(m_status_code));
+
 }
 
 
@@ -114,7 +116,8 @@ std::string HttpResponse::get_type(const std::string& path)
         { ".css",   "text/css "},
         { ".js",    "text/javascript "},
         { ".json",  "application/json; charset=utf-8"},
-        { ".plain", "text/plain; charset=utf-8"}
+        { ".plain", "text/plain; charset=utf-8"},
+        { ".ico",   "imge/ico"}
     };
     auto findpos=path.find_last_of('.');//找到文件路径的后缀位置
     if(findpos!=std::string::npos){//如果存在
