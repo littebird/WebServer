@@ -114,7 +114,7 @@ void HttpRequest::parse_uri()
 
     if(m_method=="GET"){
         auto pos=m_uri.find('?');
-        if(pos!=std::string::npos){//未到字符串尾，就找到？
+        if(pos!=std::string::npos){//未到字符串尾，就找到'?'
             //uri中有querystring
             m_path=m_uri.substr(0,pos);
             m_query_string=m_uri.substr(pos+1);

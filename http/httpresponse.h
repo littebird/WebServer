@@ -5,6 +5,7 @@
 #include<boost/asio/streambuf.hpp>
 #include<fstream>
 #include<unordered_map>
+#include<string>
 
 // HTTP Status codes
 namespace CODE_STATUS {
@@ -62,6 +63,7 @@ public:
     void addHeader();
     void addBody();
     void buildResponse();
+    void buildH2Response(std::vector<std::pair<std::string,std::string>>& headers);
     void readFile();
     std::string statusCode()
     {

@@ -5,11 +5,12 @@
 #include<vector>
 #include<regex>
 #include<unordered_map>
-
+#include"../http2server.h"
 
 //http请求类
 class HttpRequest
 {
+    friend class Http2Server;
 public:
 
     HttpRequest();

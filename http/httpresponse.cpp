@@ -81,6 +81,18 @@ void HttpResponse::buildResponse()
 
 }
 
+void HttpResponse::buildH2Response(std::vector<std::pair<std::string,std::string>>& headers)
+{
+
+    m_status_code=CODE_STATUS::value::ok;
+    readFile();
+    headers.emplace_back("server","webserver");
+    headers.emplace_back("date",curTime());
+    headers.emplace_back("content-type",get_type(m_path));
+    headers.emplace_back("content-length",std::to_string(m_response_body.size()));
+    headers.emplace_back(":status",std::to_string(m_status_code));
+}
+
 
 
 std::string HttpResponse::get_type(const std::string& path)
@@ -101,7 +113,7 @@ std::string HttpResponse::get_type(const std::string& path)
         { ".mp4",   "video/mpeg4"},
         { ".css",   "text/css "},
         { ".js",    "text/javascript "},
-        { ".json",  "application/json; charset=     utf-8"},
+        { ".json",  "application/json; charset=utf-8"},
         { ".plain", "text/plain; charset=utf-8"}
     };
     auto findpos=path.find_last_of('.');//找到文件路径的后缀位置
