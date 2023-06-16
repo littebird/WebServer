@@ -24,6 +24,8 @@ struct ConnectionSettings{
     uint32_t max_header_list_size;
 };
 struct ConnectionData {
+        Hpack::DynamicTable decoding_dynamic_table;
+        Hpack::DynamicTable encoding_dynamic_table;
         ConnectionSettings client_settings;
         ConnectionSettings server_settings;
 };

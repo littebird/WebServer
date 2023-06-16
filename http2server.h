@@ -6,12 +6,15 @@
 #include<unordered_map>
 #include<boost/asio/ssl.hpp>
 #include<boost/asio.hpp>
+#include<algorithm>
+#include<random>
+#include"http/v2/hpack.h"
 #include<chrono>
 #include"frame.h"
 #include"settingsframe.h"
 #include"http2_stream.h"
 #include"http/v2/decoder.h"
-
+#include"http/v2/encoder.h"
 
 struct Requset{
     std::unordered_map<std::string,std::string> outgoing_headers;
@@ -49,10 +52,12 @@ public:
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
+    void sendHeaders(std::vector<std::pair<std::string,std::string>> &headers,const uint32_t streamId);
+    long sendData(const void *src,std::size_t size,const uint32_t streamId);
+    static uint8_t getPaddingSize(std::size_t data_size);
     static void goAway(const std::chrono::milliseconds &timeout,
                        ConnectionData &conn,const uint32_t lastStreamId,
                        const Error_code errorcode);
-private:
     std::shared_ptr<Http2_Stream> stream;
 };
 

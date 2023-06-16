@@ -66,7 +66,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             stream.m_frame_type=incframe._frame_hd.type;
 
         }
-
+std::cout<<(uint16_t)incframe._frame_hd.type<<std::endl;
         Error_code result=Error_code::NO_ERROR;
 
         switch(stream.m_frame_type)
@@ -127,6 +127,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         else if((incframe._frame_hd.flags & frameHeader_flag::END_STREAM)&& incframe._frame_hd.stream_id!=0)
         {
             //处理队列
+            break;
         }
 
     }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
@@ -236,8 +237,6 @@ bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip
         //to do 读数据
         read_size=socket.read_some(boost::asio::buffer(buf));
 
-
-        read_size=socket.read_some(boost::asio::buffer(buf));
         if(read_size<long(FRAME_HEADER_SIZE)){
             return false;
         }
@@ -254,7 +253,7 @@ bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip
     incframe._frame_hd.flags=static_cast<frameHeader_flag>(*(addr + 4) );
     incframe._frame_hd.stream_id = ::ntohl(*reinterpret_cast<const uint32_t *>(addr + 5) );
 
-    std::cout<<(uint16_t)incframe._frame_hd.type<<" "<<(uint16_t) incframe._frame_hd.flags<<" "<<(uint32_t)incframe._frame_hd.stream_id<<std::endl;
+//    std::cout<<(uint16_t)incframe._frame_hd.type<<" "<<(uint16_t) incframe._frame_hd.flags<<" "<<(uint32_t)incframe._frame_hd.stream_id<<std::endl;
 
     return true;
 }
@@ -464,6 +463,106 @@ Http2_Stream &Http2Server::getStreamData(std::unordered_map<uint32_t,Http2_Strea
 
     return streams.emplace(streamId,Http2_Stream(streamId,conn)).first->second;
 }
+
+void Http2Server::sendHeaders(std::vector<std::pair<std::string, std::string> > &headers,const uint32_t streamId)
+{
+
+    std::vector<char> buf;
+    buf.reserve(4096);
+    buf.resize(FRAME_HEADER_SIZE);
+
+    Encoder::encode(buf,headers,this->stream->dynamicTable);
+    const uint32_t frame_size=uint32_t(buf.size()-FRAME_HEADER_SIZE);
+
+    frameHeader_flag flags=frameHeader_flag::END_HEADERS;
+
+    if(1)//为结束流
+    {
+        flags = frameHeader_flag::END_STREAM;
+    }
+
+    Http2Server::set_frame_header(reinterpret_cast<uint8_t *>(buf.data()),frame_size,frame_type::HTTP2_HEADERS,
+                                  flags,streamId);
+    //fas
+
+}
+
+long Http2Server::sendData(const void *src, std::size_t size,const uint32_t streamId)
+{
+    const uint8_t *data=reinterpret_cast<const uint8_t *>(src);
+    const ConnectionSettings &setting=this->stream->m_connectiondata.client_settings;
+
+    std::vector<uint8_t> buf;
+    buf.reserve(setting.max_frame_size+FRAME_HEADER_SIZE);
+
+    long send_size=0;
+
+    while(size!=0)
+    {
+        std::size_t data_size=setting.max_frame_size<size ? setting.max_frame_size : size;
+
+        const uint8_t padding=Http2Server::getPaddingSize(data_size);
+        const uint16_t padding_size=padding+sizeof(uint8_t);
+
+        if(padding_size)
+        {
+            if(data_size+padding_size>setting.max_frame_size)
+            {
+                data_size=setting.max_frame_size-padding_size;
+            }
+        }
+        const uint32_t frame_size=static_cast<uint32_t>(data_size+padding_size);
+
+        buf.resize(frame_size+FRAME_HEADER_SIZE);
+
+        frameHeader_flag flags=frameHeader_flag::EMPTY;
+
+        if(1)//为结束流
+        {
+            flags =frameHeader_flag::END_STREAM;
+        }
+
+        std::size_t cur=FRAME_HEADER_SIZE;
+
+        if(padding_size)
+        {
+            flags =frameHeader_flag::PADDED;
+            buf[cur]=padding;
+            ++cur;
+        }
+
+        Http2Server::set_frame_header(buf.data(),frame_size,frame_type::HTTP2_DATA,flags,streamId);
+
+        std::copy(data,data+data_size,buf.data()+cur);
+
+        if(padding)
+        {
+            std::fill(buf.end()-padding,buf.end(),0);
+        }
+
+        //fas
+
+
+    }
+    return send_size;
+}
+
+uint8_t Http2Server::getPaddingSize(std::size_t data_size)
+{
+    if(data_size==0)
+         return 0;
+
+    std::random_device rd;
+    uint8_t paddings=uint8_t(rd());
+
+    while(paddings>=data_size)
+    {
+        paddings/=2;
+    }
+    return paddings;
+}
+
+
 
 void Http2Server::goAway(const std::chrono::milliseconds &timeout,
                          ConnectionData &conn, const uint32_t lastStreamId,
