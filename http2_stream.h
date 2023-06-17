@@ -36,7 +36,7 @@ class Http2_Stream
 {
 public:
     Http2_Stream();
-    Http2_Stream(uint32_t streamid,const ConnectionData &conn);
+    Http2_Stream(uint32_t streamid, ConnectionData &conn);
     void stream_init(uint32_t stream_id,http2_stream_state state);//流的初始化
     bool set_send_stream_state(std::shared_ptr<Frame> &item);//发送帧时流状态的改变
     bool set_recieve_stream_state(std::shared_ptr<Frame> &item);//接收帧时流状态的改变

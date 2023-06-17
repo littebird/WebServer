@@ -7,6 +7,7 @@
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
   : strand_(boost::asio::make_strand(io_context)),
     socket_(new ssl_socket(io_context,context)),
+    h2_(new Http2Server()),
     mutex_(new std::mutex())
 {
 //    count=0;
@@ -26,7 +27,7 @@ void Connection::start()
 
 void Connection::handle_handshake(const boost::system::error_code &error)
 {
-    //    std::cout<<std::this_thread::get_id()<<std::endl;
+//        std::cout<<std::this_thread::get_id()<<std::endl;
 //        count++;
 //        std::cout<<count<<std::endl;
 
@@ -53,9 +54,7 @@ void Connection::handle_handshake_h2(const boost::system::error_code &error)
 //            std::cout<<(*read_buffer).data()<<std::endl;
 //    });
 
-    std::shared_ptr<Http2Server> h2;
-
-    h2->process(socket_);
+    h2_->process(socket_);
 
 
 }

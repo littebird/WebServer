@@ -1,32 +1,32 @@
 #include "http2server.h"
 #include <arpa/inet.h>
 
-Http2Server::Http2Server():mutex_h2(new std::mutex())
+Http2Server::Http2Server():mutex_h2(new std::mutex()),conn(new ConnectionData)
 {
 
+    streams=std::make_shared<std::unordered_map<uint32_t,Http2_Stream>>();
+    auto stream=Http2_Stream(0,*conn);
+    streams->emplace(0,stream);
 }
 
 void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > &socket)
 {
 
-    ConnectionData conn;
-
     if(!getClientPreface(*socket)){
         //to do 如果连接前言出错发送goaway帧
         constexpr uint32_t last_stream_id = 0;
-        goAway(*socket,conn,last_stream_id,Error_code::PROTOCOL_ERROR);
+        goAway(*socket,*conn,last_stream_id,Error_code::PROTOCOL_ERROR);
         return;
     }
-    conn.client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
-    conn.server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
+    conn->client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
+    conn->server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,0};
+
 
     std::vector<char> buf(MAX_FRAME_SIZE);
 
 
-    std::unordered_map<uint32_t,Http2_Stream> streams{
-      {0,Http2_Stream(0,conn)}
-    };
-    Http2_Stream &primary=streams.find(0)->second;
+
+    Http2_Stream &primary=streams->find(0)->second;
 
 //    *stream = streams.find(0)->second;
     std::size_t streams_process_count = 0;
@@ -51,7 +51,10 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         {
             last_stream_id=incframe._frame_hd.stream_id;
         }
-        Http2_Stream &stream=getStreamData(streams,incframe._frame_hd.stream_id,conn);
+        Http2_Stream &stream=getStreamData(*streams,incframe._frame_hd.stream_id,*conn);
+
+//        std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
+//        std::cout<<"streams size: "<<streams->size()<<std::endl;
 
         if(stream.m_state==http2_stream_state::STREAM_CLOSE)
         {
@@ -140,7 +143,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
 
     }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
 
-    goAway(*socket,conn,last_stream_id,Error_code::NO_ERROR);
+    goAway(*socket,*conn,last_stream_id,Error_code::NO_ERROR);
 
 }
 
@@ -282,8 +285,6 @@ bool Http2Server::getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip
     incframe._frame_hd.type=static_cast<frame_type>(*(addr + 3) );
     incframe._frame_hd.flags=static_cast<frameHeader_flag>(*(addr + 4) );
     incframe._frame_hd.stream_id = ::ntohl(*reinterpret_cast<const uint32_t *>(addr + 5) );
-
-//    std::cout<<(uint16_t)incframe._frame_hd.type<<" "<<(uint16_t) incframe._frame_hd.flags<<" "<<(uint32_t)incframe._frame_hd.stream_id<<std::endl;
 
     return true;
 }
@@ -506,10 +507,6 @@ void Http2Server::sendHeaders(boost::asio::ssl::stream<boost::asio::ip::tcp::soc
 
     uint8_t flags=frameHeader_flag::END_HEADERS;
 
-    if(1)//为结束流
-    {
-        flags |=frameHeader_flag::END_STREAM;
-    }
 
     Http2Server::set_frame_header(reinterpret_cast<uint8_t *>(buf.data()),frame_size,frame_type::HTTP2_HEADERS,
                                   (frameHeader_flag)flags,incStream.m_stream_id);
@@ -537,7 +534,7 @@ long Http2Server::sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket
     {
         std::size_t data_size=setting.max_frame_size<size ? setting.max_frame_size : size;
 
-        const uint8_t padding=Http2Server::getPaddingSize(data_size);
+        const uint8_t padding=Http2Server::getPaddingSize(data_size);//加上的填充字节，增加安全性
         const uint16_t padding_size=padding+sizeof(uint8_t);
 
 
@@ -550,7 +547,6 @@ long Http2Server::sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket
             }
         }
         const uint32_t frame_size=static_cast<uint32_t>(data_size+padding_size);
-//        const uint32_t frame_size=static_cast<uint32_t>(data_size);
 
         buf.resize(frame_size+FRAME_HEADER_SIZE);
 
@@ -579,12 +575,6 @@ long Http2Server::sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket
             std::fill(buf.end()-padding,buf.end(),0);
         }
 
-//        std::string full_path{"/root/hpack"};
-//        std::ofstream ofs(full_path.c_str(),std::ios::out | std::ios::binary);//以写，二进制方式打开文件
-
-//        for(auto &ch:buf){
-//            ofs<<ch;
-//        }
 
         const long sendlen=socket.write_some(boost::asio::buffer(buf,buf.size()));
 

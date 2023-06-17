@@ -64,6 +64,9 @@ public:
                        const Error_code errorcode);
     std::shared_ptr<std::mutex> mutex_h2;
 
+    std::shared_ptr<ConnectionData> conn;
+    std::shared_ptr<std::unordered_map<uint32_t,Http2_Stream>> streams;
+
 };
 
 #endif // HTTP2SERVER_H
