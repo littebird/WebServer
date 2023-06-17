@@ -51,6 +51,7 @@ public:
     http2_stream_state m_state;//流的状态
     uint32_t m_weight;//流的权重
     uint8_t m_frame_type;
+    uint32_t m_window_size;//流量窗口
     void *reserved;//保留位
 
 };

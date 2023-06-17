@@ -50,6 +50,7 @@ public:
     static Error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Settings(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
+    static Error_code parseHttp2WindowUpdate(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
@@ -58,6 +59,7 @@ public:
                      ,std::vector<std::pair<std::string,std::string>> &headers,Http2_Stream& incStream);
     long sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
                   const void *src,std::size_t size,Http2_Stream& incStream);
+    static void sendWindowUpdate(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,const Http2_Stream& incstream,const uint32_t size);
     static uint8_t getPaddingSize(std::size_t data_size);
     static void goAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
                        ConnectionData &conn,const uint32_t lastStreamId,

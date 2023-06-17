@@ -28,7 +28,6 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
 
     Http2_Stream &primary=streams->find(0)->second;
 
-//    *stream = streams.find(0)->second;
     std::size_t streams_process_count = 0;
     uint32_t last_stream_id = 0;
 
@@ -53,8 +52,8 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         }
         Http2_Stream &stream=getStreamData(*streams,incframe._frame_hd.stream_id,*conn);
 
-//        std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
-//        std::cout<<"streams size: "<<streams->size()<<std::endl;
+        std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
+        std::cout<<"streams size: "<<streams->size()<<std::endl;
 
         if(stream.m_state==http2_stream_state::STREAM_CLOSE)
         {
@@ -121,6 +120,18 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
                 result=Error_code::NO_ERROR;
                 break;
             }
+            case frame_type::HTTP2_GOAWAY:
+            {
+                std::cout<<"go away"<<std::endl;
+                break;
+            }
+            case frame_type::HTTP2_WINDOW_UPDATE:
+            {
+
+                result=parseHttp2WindowUpdate(incframe,stream,addr,end);
+                std::cout<<stream.m_window_size<<std::endl;
+                break;
+            }
             defult:
                 result=Error_code::PROTOCOL_ERROR;
                 break;
@@ -167,9 +178,9 @@ void Http2Server::after_process(boost::asio::ssl::stream<boost::asio::ip::tcp::s
     res->buildH2Response(outgoing_headers);
 
 
-    sendHeaders(socket,outgoing_headers,incstream);
+    sendHeaders(socket,outgoing_headers,incstream);//发送headers帧
 
-    sendData(socket,res->m_response_body.data(),res->m_response_body.size(),incstream);
+    sendData(socket,res->m_response_body.data(),res->m_response_body.size(),incstream);//发送data帧
 
 
 }
@@ -451,6 +462,32 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
     return Error_code::NO_ERROR;
 }
 
+Error_code Http2Server::parseHttp2WindowUpdate(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
+{
+    if(incstream.m_state==http2_stream_state::STREAM_LOCAL_RESERVED){
+        return Error_code::PROTOCOL_ERROR;
+    }else if(incstream.m_state!=http2_stream_state::STREAM_OPEN){
+        return Error_code::NO_ERROR;
+    }
+
+    if(incframe._frame_hd.length!=sizeof (uint32_t)){
+        return Error_code::FRAME_SIZE_ERROR;
+    }
+
+    const uint32_t window_size_inc=::ntohl(*reinterpret_cast<const uint32_t*>(src));
+
+    if(window_size_inc==0){
+        return Error_code::PROTOCOL_ERROR;
+    }else if(window_size_inc>=uint32_t(1)<<31){
+        return Error_code::FLOW_CONTROL_ERROR;
+    }
+
+    incstream.m_window_size+=window_size_inc;
+
+    return Error_code::NO_ERROR;
+
+}
+
 uint32_t Http2Server::ntoh24(const void *src24) noexcept
 {
     static endianness endian=endianness::INIT;
@@ -596,8 +633,20 @@ long Http2Server::sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket
     return send_size;
 }
 
-uint8_t Http2Server::getPaddingSize(std::size_t data_size)
+void Http2Server::sendWindowUpdate(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket, const Http2_Stream &incstream, const uint32_t size)
 {
+    std::array<uint8_t,FRAME_HEADER_SIZE+sizeof(uint32_t)>buf;
+    uint8_t* addr=buf.data();
+
+    addr=set_frame_header(addr,sizeof(uint32_t),frame_type::HTTP2_WINDOW_UPDATE,frameHeader_flag::EMPTY,incstream.m_stream_id);
+
+    *reinterpret_cast<uint32_t *>(addr)=::htonl(size);
+
+    socket.write_some(boost::asio::buffer(buf.data(),buf.size()));
+}
+
+uint8_t Http2Server::getPaddingSize(std::size_t data_size)
+{//随机生成若干的填充字节
     if(data_size==0)
          return 0;
 

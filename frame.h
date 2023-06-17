@@ -27,6 +27,7 @@ enum frame_type: uint8_t{//帧类型
     HTTP2_PUSH_PROMISE = 0x05,
     HTTP2_PING = 0x06,
     HTTP2_GOAWAY = 0x07,
+    HTTP2_WINDOW_UPDATE = 0x08,
     HTTP2_CONTINUATION = 0x09,
 };
 enum Error_code{//rst_streamz帧和goaway帧的状态码
