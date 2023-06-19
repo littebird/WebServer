@@ -53,6 +53,7 @@ void HttpResponse::addBody()
 }
 void HttpResponse::readFile()
 {
+//    std::cout<<m_path<<std::endl;
 
     std::string full_path=doc_root+m_path;
     std::fstream ifs(full_path.c_str(),std::ios::in | std::ios::binary);//以读，二进制方式打开文件

@@ -50,7 +50,6 @@ namespace Hpack {
         };
         void addHeader(const std::pair<std::string, std::string> &header)//添加头部字段
         {
-            header_table_size++;
             cur_header_entry_size+=header.first.length()+header.second.length();
             entrys.emplace_front(header);//添加至动态表表头
 
@@ -63,7 +62,6 @@ namespace Hpack {
 
                 cur_header_entry_size-=pair.first.length()+pair.second.length();//减去将要移除的name-value大小
                 entrys.pop_back();//移除动态表最后一项
-                header_table_size--;
 
             }
 

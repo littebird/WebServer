@@ -7,9 +7,10 @@
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
   : strand_(boost::asio::make_strand(io_context)),
     socket_(new ssl_socket(io_context,context)),
-    h2_(new Http2Server()),
     mutex_(new std::mutex())
 {
+
+    h2_=std::make_shared<Http2Server>(mutex_);
 //    count=0;
 }
 

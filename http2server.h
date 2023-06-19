@@ -29,7 +29,7 @@ enum endianness{
 class Http2Server
 {
 public:
-    Http2Server();
+    Http2Server(std::shared_ptr<std::mutex>& Mutex);
 
     void process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>& socket);//http2处理的过程
 
@@ -48,9 +48,10 @@ public:
                                       long &read_size)noexcept;
 
     static Error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
-    static Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
+     Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Settings(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2WindowUpdate(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
+    static Error_code parseHttp2rstStream(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
@@ -64,11 +65,14 @@ public:
     static void goAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
                        ConnectionData &conn,const uint32_t lastStreamId,
                        const Error_code errorcode);
-    std::shared_ptr<std::mutex> mutex_h2;
+    static void sendRstStream(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,Http2_Stream& incstream,const Error_code error);
+
+    std::shared_ptr<std::mutex>& _Mutex;
 
     std::shared_ptr<ConnectionData> conn;
     std::shared_ptr<std::unordered_map<uint32_t,Http2_Stream>> streams;
 
+    Hpack::DynamicTable decoding_dynamic_table;
 };
 
 #endif // HTTP2SERVER_H

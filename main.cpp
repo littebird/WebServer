@@ -56,8 +56,7 @@ void  test_hpack(){
 
     Decoder decode;
 
-    if(!decode.decode(ustrs,str.length(),stream))
-        std::cout<<"false"<<std::endl;
+//    if(!decode.decode(ustrs,str.length(),stream))
+//        std::cout<<"false"<<std::endl;
 
-//    std::cout<<responseTable[0].second<<"\n";
 }

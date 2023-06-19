@@ -9,7 +9,7 @@ enum frameHeader_flag: uint8_t{//帧首部标志
     END_STREAM=0x01,
     END_HEADERS=0x04,
     PADDED=0x08,
-    PRIORIY=0x20,
+    PRIORITY=0x20,
 };
 struct frame_hd{//帧首部
     std::size_t length;//帧载荷的长度
