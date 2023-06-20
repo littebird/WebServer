@@ -10,7 +10,7 @@ Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::co
     mutex_(new std::mutex())
 {
 
-    h2_=std::make_shared<Http2Server>(mutex_);
+    h2_=std::make_shared<Http2Server>();
 //    count=0;
 }
 

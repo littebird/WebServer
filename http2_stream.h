@@ -24,6 +24,8 @@ struct ConnectionSettings{
     uint32_t max_header_list_size;
 };
 struct ConnectionData {
+        Hpack::DynamicTable decoding_dynamic_table;
+        Hpack::DynamicTable encoding_dynamic_table;
         ConnectionSettings client_settings;
         ConnectionSettings server_settings;
 };
@@ -42,12 +44,9 @@ public:
     bool set_recieve_stream_state(std::shared_ptr<Frame> &item);//接收帧时流状态的改变
     void set_weight(uint32_t weight);//设置权重
     uint32_t get_stream_id();//返回流id
-
-    Hpack::DynamicTable decoding_dynamic_table;
-    Hpack::DynamicTable encoding_dynamic_table;
     uint32_t m_stream_id;//流id
     request_data resquest_info;//请求信息
-    ConnectionData m_connectiondata;
+    ConnectionData &_conn;
     http2_stream_state m_state;//流的状态
     uint32_t m_weight;//流的权重
     uint8_t m_frame_type;

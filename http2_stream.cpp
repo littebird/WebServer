@@ -1,15 +1,9 @@
 #include "http2_stream.h"
 
-Http2_Stream::Http2_Stream()
-    :m_state(STREAM_IDLE)
-{
-
-}
-
 Http2_Stream::Http2_Stream(uint32_t streamid,ConnectionData &conn)
     :m_state(STREAM_IDLE),
     m_stream_id(streamid),
-     m_connectiondata(conn)
+     _conn(conn)
 {
 
 }

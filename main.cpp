@@ -48,8 +48,6 @@ void  test_hpack(){
         str+=ch;
     }
 
-    Http2_Stream stream;
-
 
     const uint8_t *ustrs=reinterpret_cast<const uint8_t*>(str.data());
 

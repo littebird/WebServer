@@ -33,7 +33,7 @@ class Decoder
 public:
     Decoder();
 
-    bool decode(const uint8_t *src,const std::size_t srclen,Http2_Stream& incstream,Hpack::DynamicTable& decoding_dynamic_table);//headers帧头部块解压缩数据
+    bool decode(const uint8_t *src,const std::size_t srclen,Http2_Stream& incstream);//headers帧头部块解压缩数据
 
     void init(){
         _buf.clear();

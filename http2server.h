@@ -29,7 +29,7 @@ enum endianness{
 class Http2Server
 {
 public:
-    Http2Server(std::shared_ptr<std::mutex>& Mutex);
+    Http2Server();
 
     void process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>& socket);//http2处理的过程
 
@@ -48,31 +48,28 @@ public:
                                       long &read_size)noexcept;
 
     static Error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
-     Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
+    static Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Settings(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2WindowUpdate(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2rstStream(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
+    static Error_code parseHttp2GoAway(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static uint32_t ntoh24(const void *src24) noexcept;
     static Http2_Stream &getStreamData(std::unordered_map<uint32_t,Http2_Stream> &streams,
                                      const uint32_t streamId,ConnectionData &conn);
 
     void sendHeaders(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket
-                     ,std::vector<std::pair<std::string,std::string>> &headers,Http2_Stream& incStream);
+                     ,std::vector<std::pair<std::string,std::string>> &headers,Http2_Stream& incStream);//发送headers帧
     long sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
-                  const void *src,std::size_t size,Http2_Stream& incStream);
+                  const void *src,std::size_t size,Http2_Stream& incStream);//发送data帧
+    static uint8_t getPaddingSize(std::size_t data_size);//获取填充字节大小
     static void sendWindowUpdate(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,const Http2_Stream& incstream,const uint32_t size);
-    static uint8_t getPaddingSize(std::size_t data_size);
-    static void goAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
+    static void sendGoAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
                        ConnectionData &conn,const uint32_t lastStreamId,
-                       const Error_code errorcode);
-    static void sendRstStream(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,Http2_Stream& incstream,const Error_code error);
+                       const Error_code errorcode);//发送goaway帧
+    static void sendRstStream(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
+                              Http2_Stream& incstream,const Error_code error);//发送rststream帧
 
-    std::shared_ptr<std::mutex>& _Mutex;
-
-    std::shared_ptr<ConnectionData> conn;
     std::shared_ptr<std::unordered_map<uint32_t,Http2_Stream>> streams;
-
-    Hpack::DynamicTable decoding_dynamic_table;
 };
 
 #endif // HTTP2SERVER_H

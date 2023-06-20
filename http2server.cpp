@@ -1,30 +1,34 @@
 #include "http2server.h"
 #include <arpa/inet.h>
 
-Http2Server::Http2Server(std::shared_ptr<std::mutex> &Mutex):conn(new ConnectionData),_Mutex(Mutex)
+Http2Server::Http2Server()
 {
 
     streams=std::make_shared<std::unordered_map<uint32_t,Http2_Stream>>();
-    auto stream=Http2_Stream(0,*conn);
-    streams->emplace(0,stream);
+
 }
 
 void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > &socket)
 {
 
+    ConnectionData conn;
+
     if(!getClientPreface(*socket)){
         //to do 如果连接前言出错发送goaway帧
         constexpr uint32_t last_stream_id = 0;
-        goAway(*socket,*conn,last_stream_id,Error_code::PROTOCOL_ERROR);
+        sendGoAway(*socket,conn,last_stream_id,Error_code::PROTOCOL_ERROR);
         return;
     }
-    conn->client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,256};
-    conn->server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,256};
+
+
+    conn.client_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,256};
+    conn.server_settings=ConnectionSettings{4096,1,0,(1<<16)-1,1<<14,256};
 
 
     std::vector<char> buf(MAX_FRAME_SIZE);
 
-
+    auto stream=Http2_Stream(0,conn);
+    streams->emplace(0,stream);
 
     Http2_Stream &primary=streams->find(0)->second;
 
@@ -41,7 +45,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             break;
         }
 
-        std::cout<<uint16_t(incframe._frame_hd.type)<<std::endl;
+//        std::cout<<uint16_t(incframe._frame_hd.type)<<std::endl;
 
         const uint8_t *addr=reinterpret_cast<const uint8_t *>(buf.data())+FRAME_HEADER_SIZE;
         const uint8_t *end=addr+incframe._frame_hd.length;
@@ -54,9 +58,9 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         }
 
 
-        Http2_Stream &stream=getStreamData(*streams,incframe._frame_hd.stream_id,*conn);
+        Http2_Stream &stream=getStreamData(*streams,incframe._frame_hd.stream_id,conn);
 
-        std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
+//        std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
 //        std::cout<<"streams size: "<<streams->size()<<std::endl;
 
         if(stream.m_state==http2_stream_state::STREAM_CLOSE)
@@ -95,16 +99,13 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             {
                 result=parseHttp2Headers(incframe,stream,addr,end);
 
+
                 if(incframe._frame_hd.flags&&frameHeader_flag::END_HEADERS)
                 {
                     std::cout<<"end_headers"<<std::endl;
 
                     after_process(*socket,stream);
 
-
-//                    for(auto const& table:decoding_dynamic_table.getEntrys()){
-//                        std::cout<<table.first<<std::endl;
-//                    }
 
                 }
                 break;
@@ -138,6 +139,7 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
             case frame_type::HTTP2_GOAWAY:
             {
                 std::cout<<"go away"<<std::endl;
+                result=parseHttp2GoAway(incframe,stream,addr,end);
                 break;
             }
             case frame_type::HTTP2_WINDOW_UPDATE:
@@ -161,15 +163,14 @@ void Http2Server::process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::
         }
         else if((incframe._frame_hd.flags & frameHeader_flag::END_STREAM)&& incframe._frame_hd.stream_id!=0)
         {
-            //处理队列
-//            std::cout<<"stream id: "<<stream.get_stream_id()<<std::endl;
+            //处理end_stream flag
 
         }
 
     }while(http2_stream_state::STREAM_CLOSE!=primary.m_state);
 
 
-    goAway(*socket,*conn,last_stream_id,Error_code::NO_ERROR);
+    sendGoAway(*socket,conn,last_stream_id,Error_code::NO_ERROR);
 
 }
 
@@ -178,6 +179,7 @@ void Http2Server::after_process(boost::asio::ssl::stream<boost::asio::ip::tcp::s
     auto req=std::make_shared<HttpRequest>();
 
     for(auto const& header:incstream.resquest_info.incoming_headers){
+//        std::cout<<header.first<<header.second<<std::endl;
         req->header_kv.emplace(header.first,header.second);
         if(header.first==":method")
             req->m_method=header.second;
@@ -384,8 +386,8 @@ Error_code Http2Server::parseHttp2Headers(Frame &incframe, Http2_Stream &incstre
 
 
     Decoder decoder;
-    if(decoder.decode(src,std::size_t(end-src)-padding,incstream,decoding_dynamic_table)==false){//解码头部块
-        std::cout<<"decode false"<<std::endl;
+    if(decoder.decode(src,std::size_t(end-src)-padding,incstream)==false){//解码头部块
+//        std::cout<<"decode false"<<std::endl;
         return Error_code::COMPRESSION_ERROR;
     }
 
@@ -411,7 +413,7 @@ Error_code Http2Server::parseHttp2Settings(Frame &incframe, Http2_Stream &incstr
 
     }
 
-    ConnectionSettings &settings=incstream.m_connectiondata.client_settings;
+    ConnectionSettings &settings=incstream._conn.client_settings;
 
     while(src!=end){
         const settings_id setting = static_cast<settings_id>(
@@ -524,6 +526,17 @@ Error_code Http2Server::parseHttp2rstStream(Frame &incframe, Http2_Stream &incst
     return Error_code::NO_ERROR;
 }
 
+Error_code Http2Server::parseHttp2GoAway(Frame &incframe, Http2_Stream &incstream, const uint8_t *src, const uint8_t *end)
+{
+    if(incframe._frame_hd.stream_id!=0){
+        return Error_code::PROTOCOL_ERROR;
+    }
+
+    incstream.m_state=http2_stream_state::STREAM_CLOSE;
+
+    return Error_code::NO_ERROR;
+}
+
 uint32_t Http2Server::ntoh24(const void *src24) noexcept
 {
     static endianness endian=endianness::INIT;
@@ -572,7 +585,7 @@ void Http2Server::sendHeaders(boost::asio::ssl::stream<boost::asio::ip::tcp::soc
     buf.reserve(4096);
     buf.resize(FRAME_HEADER_SIZE);
 
-    Encoder::encode(buf,headers,incStream.encoding_dynamic_table);
+    Encoder::encode(buf,headers,incStream._conn.encoding_dynamic_table);
 
 
 
@@ -595,7 +608,7 @@ long Http2Server::sendData(boost::asio::ssl::stream<boost::asio::ip::tcp::socket
     const uint8_t *data=reinterpret_cast<const uint8_t *>(src);
 
 
-    const ConnectionSettings &setting=incStream.m_connectiondata.client_settings;
+    const ConnectionSettings &setting=incStream._conn.client_settings;
 
     std::vector<uint8_t> buf;
     buf.reserve(setting.max_frame_size+FRAME_HEADER_SIZE);
@@ -699,7 +712,7 @@ uint8_t Http2Server::getPaddingSize(std::size_t data_size)
 
 
 
-void Http2Server::goAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket, ConnectionData &conn, const uint32_t lastStreamId, const Error_code errorcode)
+void Http2Server::sendGoAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket, ConnectionData &conn, const uint32_t lastStreamId, const Error_code errorcode)
 {
     constexpr uint32_t frame_size = sizeof(uint32_t) * 2;
 
@@ -707,7 +720,7 @@ void Http2Server::goAway(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> 
 
     uint8_t *addr=buf.data();
 
-    addr=set_frame_header(addr,frame_size,frame_type::HTTP2_RST_STREAM,frameHeader_flag::EMPTY,0);
+    addr=set_frame_header(addr,frame_size,frame_type::HTTP2_GOAWAY,frameHeader_flag::EMPTY,0);
 
     *reinterpret_cast<uint32_t *>(addr) = ::htonl(lastStreamId);
 
