@@ -5,7 +5,7 @@
 #include "hpack.cpp"
 #include <tuple>
 #include <numeric>
-#include "../../http2_stream.h"
+#include "http2_stream.h"
 
 enum decodeOpcode{//解码是否存在索引
     NONE,
