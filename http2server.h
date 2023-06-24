@@ -12,8 +12,8 @@
 #include<chrono>
 #include<thread>
 #include"http/v2/hpack.h"
-#include"frame.h"
-#include"http2_stream.h"
+#include"http/v2/frame.h"
+#include"http/v2/http2_stream.h"
 #include"http/v2/decoder.h"
 #include"http/v2/encoder.h"
 #include"http/httprequest.h"
