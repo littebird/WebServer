@@ -31,8 +31,6 @@ struct ConnectionData {
 };
 struct request_data{
     std::vector<std::pair<std::string,std::string>> incoming_headers;
-    std::unordered_multimap<std::string,std::string> incoming_data;
-    std::unordered_multimap<std::string,std::string> incoming_files;
 };
 class Http2_Stream
 {

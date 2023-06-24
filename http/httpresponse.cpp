@@ -40,6 +40,8 @@ void HttpResponse::addHeader()
     if(!m_response_body.empty())
         os<<"Content-length: "<<m_response_body.size()<<CRLF;
 
+    os<<"Access-Control-Allow-Origin: *"<<CRLF;
+
     os<<CRLF;//空行
 
 }
@@ -93,6 +95,7 @@ void HttpResponse::buildH2Response(std::vector<std::pair<std::string,std::string
     headers.emplace_back("date",curTime());
     headers.emplace_back("content-type",get_type(m_path));
     headers.emplace_back("content-length",std::to_string(m_response_body.size()));
+    headers.emplace_back("access-control-allow-origin","*");
 
 }
 
@@ -118,7 +121,9 @@ std::string HttpResponse::get_type(const std::string& path)
         { ".js",    "text/javascript "},
         { ".json",  "application/json; charset=utf-8"},
         { ".plain", "text/plain; charset=utf-8"},
-        { ".ico",   "imge/ico"}
+        { ".ico",   "imge/ico"},
+        { ".m3u8",  "application/x-mpegURL"},
+        { ".ts",    "video/MP2T"}
     };
     auto findpos=path.find_last_of('.');//找到文件路径的后缀位置
     if(findpos!=std::string::npos){//如果存在

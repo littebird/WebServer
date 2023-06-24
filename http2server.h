@@ -5,13 +5,14 @@
 #include<vector>
 #include<boost/asio/ssl.hpp>
 #include<boost/asio.hpp>
+#include<boost/bind.hpp>
+#include<boost/asio/error.hpp>
 #include<algorithm>
 #include<random>
 #include<chrono>
 #include<thread>
 #include"http/v2/hpack.h"
 #include"frame.h"
-#include"settingsframe.h"
 #include"http2_stream.h"
 #include"http/v2/decoder.h"
 #include"http/v2/encoder.h"
@@ -33,6 +34,9 @@ public:
 
     void process(std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>& socket);//http2处理的过程
 
+    void process_data(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket,std::vector<char>& buf,
+                      Frame& incframe,long &read_size,uint32_t last_stream_id);
+
     void after_process(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket, Http2_Stream& incstream);//解析process后的数据
 
     static std::array<uint8_t,FRAME_HEADER_SIZE> send_empty_settings(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,
@@ -41,11 +45,12 @@ public:
                                      const frame_type frametype,const frameHeader_flag frameflag,
                                      const uint32_t streamid);//设置帧首部
 
-    static bool getClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket)noexcept;//获取连接前言数据
+    static bool handleClientPreface(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket)noexcept;//获取连接前言数据
 
-    static bool getNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &socket,//获取下一个帧数据
-                                      std::vector<char> &buf,Frame& incframe,
-                                      long &read_size)noexcept;
+    static bool handleNextHttp2FrameMeta(std::vector<char> &buf,Frame& incframe,long& read_size,
+                                         std::size_t bytes_transferred);//获取下一个帧数据
+    static bool handleNextHttp2FrameMeta(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& socket,std::vector<char> &buf,
+                                         Frame& incframe,long& read_size)noexcept;//获取下一个帧数据
 
     static Error_code parseHttp2Date(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
     static Error_code parseHttp2Headers(Frame& incframe,Http2_Stream& incstream,const uint8_t* src,const uint8_t* end);
@@ -70,6 +75,7 @@ public:
                               Http2_Stream& incstream,const Error_code error);//发送rststream帧
 
     std::shared_ptr<std::unordered_map<uint32_t,Http2_Stream>> streams;
+    std::shared_ptr<ConnectionData> _conn;
 };
 
 #endif // HTTP2SERVER_H

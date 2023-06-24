@@ -46,6 +46,17 @@ enum Error_code{//rst_streamz帧和goaway帧的状态码
     INADEQUATE_SECURITY = 0x0c,
 };
 
+enum settings_id{//settings id参数定义
+    SETTINGS_HEADER_TABLE_SIZE = 0x01,
+    SETTINGS_ENABLE_PUSH = 0x02,
+    SETTINGS_MAX_CONCURRENT_STREAMS = 0x03,
+    SETTINGS_INITIAL_WINDOW_SIZE = 0x04,
+    SETTINGS_MAX_FRAME_SIZE = 0x05,
+    SETTINGS_MAX_HEADER_LIST_SIZE = 0x06,
+    SETTINGS_ENABLE_CONNECT_PROTOCOL = 0x08,
+    SETTINGS_NO_RFC7540_PRIORITIES = 0x09
+};
+
 constexpr uint32_t FRAME_HEADER_SIZE=9;     //帧首部字节数
 constexpr uint32_t MAX_WINDOW_UPDATE=(uint32_t(1)<<31)-1;   //流量控制
 constexpr uint32_t MAX_FRAME_SIZE=16384;    //默认最大帧载荷的长度

@@ -7,10 +7,11 @@
 Connection::Connection(boost::asio::io_context& io_context, boost::asio::ssl::context &context)
   : strand_(boost::asio::make_strand(io_context)),
     socket_(new ssl_socket(io_context,context)),
+//    socket_(new boost::asio::ip::tcp::socket(io_context)),
+    h2_(new Http2Server()),
     mutex_(new std::mutex())
-{
 
-    h2_=std::make_shared<Http2Server>();
+{
 //    count=0;
 }
 
@@ -18,6 +19,7 @@ ssl_socket::lowest_layer_type& Connection::socket()
 {
     return (*socket_).lowest_layer();
 }
+
 
 void Connection::start()
 {
@@ -47,17 +49,25 @@ void Connection::handle_handshake(const boost::system::error_code &error)
 
 void Connection::handle_handshake_h2(const boost::system::error_code &error)
 {
+
+//    std::array<uint8_t, 24> perface_buf;
 //    auto self=shared_from_this();
+//    socket_->async_read_some(boost::asio::buffer(perface_buf,perface_buf.size()),
+//                            [&,this,self](const boost::system::error_code &e,
+//                             std::size_t bytes_transferred){
+//        std::cout<<bytes_transferred<<std::endl;
 
-//    auto read_buffer=std::make_shared<std::vector<char>>(24);  
-//    socket_->async_read_some(boost::asio::buffer(*read_buffer),[&,this,self](const boost::system::error_code &e,
-//                            std::size_t bytes_transferred){
-//            std::cout<<(*read_buffer).data()<<std::endl;
+//        if(!h2_->handleClientPreface(perface_buf,bytes_transferred)){
+//            //如果连接前言出错发送goaway帧,并关闭连接
+//            constexpr uint32_t last_stream_id = 0;
+//            h2_->sendGoAway(*socket_,*(h2_->_conn),last_stream_id,Error_code::PROTOCOL_ERROR);
+//            close();
+//        }
+//        h2_->process(socket_);
 //    });
-
-
-    h2_->process(socket_);
-
+    if(!error){
+        h2_->process(socket_);
+    }
 
 }
 

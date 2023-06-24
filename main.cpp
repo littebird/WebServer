@@ -3,13 +3,9 @@
 #include "session.h"
 #include "log/logs.h"
 
-#include "http/v2/encoder.h"
-#include "http/v2/decoder.h"
-#include <fstream>
-
 int main()
 {
-    void test_hpack();
+//    void test_hpack();
     try {
         const std::string& address="127.0.0.1";
         const std::string& port="443";
@@ -48,13 +44,5 @@ void  test_hpack(){
         str+=ch;
     }
 
-
-    const uint8_t *ustrs=reinterpret_cast<const uint8_t*>(str.data());
-
-
-    Decoder decode;
-
-//    if(!decode.decode(ustrs,str.length(),stream))
-//        std::cout<<"false"<<std::endl;
 
 }
